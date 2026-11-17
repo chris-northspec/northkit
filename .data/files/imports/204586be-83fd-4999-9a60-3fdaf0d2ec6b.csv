@@ -1,0 +1,4 @@
+asset_number,kind,depot,serial_number,make,model,description,purchase_date,cost,ownership,hire_company,hire_reference,off_hire_date,location,is_kit,parent_asset_number,notes
+IMPPHJ7I8G-1,Ladder,E2E-A,,,,,,,,,,,,,,
+IMPPHJ7I8G-2,Spaceship,E2E-A,,,,,,,,,,,,,,
+IMPPHJ7I8G-3,Ladder,NOWHERE,,,,,,lots,,,,,,,,
