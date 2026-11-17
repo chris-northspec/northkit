@@ -1,0 +1,26 @@
+{
+  "name": "@northkit/db",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./migrate": "./src/migrate.ts",
+    "./rls-check": "./src/rls-check.ts",
+    "./data-dictionary": "./src/data-dictionary.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "migrate": "tsx src/cli/migrate.ts",
+    "check-rls": "tsx src/cli/check-rls.ts",
+    "docs": "tsx src/cli/docs.ts"
+  },
+  "dependencies": {
+    "kysely": "^0.29.9",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
+}
