@@ -1,0 +1,65 @@
+# Bare directory names match at ANY depth, so a source folder with the same name
+# (src/app/.../build once vanished this way) is silently ignored. Anchor every
+# output directory to the repo root or a known output path. Only names that can
+# never be source stay bare. CI fails if any file under apps/*/src or packages/*/src
+# is ignored (scripts/check-ignored-source.mjs).
+
+# Dependencies (never source)
+node_modules/
+.pnpm-store/
+
+# Builds
+.next/
+/dist/
+/apps/*/dist/
+/packages/*/dist/
+/build/
+/out/
+/apps/*/out/
+/coverage/
+*.tsbuildinfo
+
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/secrets/
+/deploy/secrets/
+/deploy/reporting/certs/
+/deploy/reporting/pg_hba.conf
+
+# Database dumps and local data
+*.dump
+*.sql.gz
+/backups/
+/deploy/backups/
+/pgdata/
+/deploy/pgdata/
+
+# Logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test output
+/playwright-report/
+/test-results/
+/apps/web/playwright-report/
+/apps/web/test-results/
+/apps/web/next-env.d.ts
+/apps/web/e2e/.auth/
+
+# Local photos and other files (dev default NORTHKIT_FILES_DIR)
+/data/
+
+# Written by next dev on each run (Next.js agent notes); not part of NorthKit.
+apps/web/AGENTS.md
