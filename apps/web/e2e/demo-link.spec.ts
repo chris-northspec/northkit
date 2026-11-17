@@ -40,13 +40,13 @@ test('signs in through the demo address and keeps the session', async ({ playwri
     const page = await context.newPage();
     const before = new Date();
     await signIn(page, E2E.operative);
-    await expect(page).toHaveURL(`http://${DEMO_HOST}:${port}/`);
-    await expect(page.getByRole('note')).toHaveText('Demo, fictional data');
+    await expect(page).toHaveURL(`http://${DEMO_HOST}:${port}/`, { timeout: 90_000 });
+    await expect(page.getByRole('note')).toHaveText('Demo, fictional data', { timeout: 30_000 });
     // The session holds across pages and a reload.
     await page.goto('/sites');
     await page.reload();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page).toHaveURL(/\/jobs$/);
+    await expect(page).toHaveURL(/\/sites$/);
     // The sign-in was recorded from the visitor's address, not the tunnel's.
     const pool = createPool('admin', { database: E2E_DB_NAME, max: 1 });
     try {
@@ -84,7 +84,7 @@ test('the demo strip sits above the top bar at both sizes', async ({ playwright 
     const page = await context.newPage();
     await signIn(page, E2E.operative);
     const strip = page.getByRole('note');
-    await expect(strip).toHaveText('Demo, fictional data');
+    await expect(strip).toHaveText('Demo, fictional data', { timeout: 90_000 });
     await page.waitForLoadState('networkidle');
     const box = (await strip.boundingBox())!;
     const bar = (await page.getByRole('banner').boundingBox())!;

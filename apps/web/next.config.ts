@@ -55,7 +55,7 @@ const nextConfig = (phase: string): NextConfig => {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline'",
+                `script-src 'self' 'unsafe-inline'${phase === PHASE_DEVELOPMENT_SERVER ? " 'unsafe-eval'" : ''}`,
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: blob:",
                 "connect-src 'self'",
