@@ -1,0 +1,16 @@
+{
+  "name": "@northkit/worker",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@northkit/core": "workspace:*",
+    "@northkit/db": "workspace:*",
+    "pg-boss": "^12.38.2"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "northkit",
+  "private": true,
+  "version": "0.1.0",
+  "description": "NorthKit: self-hosted facilities, maintenance and compliance for multi-site warehouse operators",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @northkit/web dev",
+    "build": "pnpm --filter @northkit/web build",
+    "lint": "eslint . --max-warnings 0 && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:e2e": "pnpm --filter @northkit/web test:e2e",
+    "db:migrate": "pnpm --filter @northkit/db migrate",
+    "db:check-rls": "pnpm --filter @northkit/db check-rls",
+    "db:docs": "pnpm --filter @northkit/db docs",
+    "db:seed": "pnpm --filter @northkit/core seed",
+    "db:seed-demo": "pnpm --filter @northkit/core seed-demo",
+    "demo:user": "pnpm --filter @northkit/core demo-user",
+    "admin:create": "pnpm --filter @northkit/core create-admin",
+    "admin:reset-mfa": "pnpm --filter @northkit/core reset-mfa",
+    "licence:install": "pnpm --filter @northkit/core licence-install",
+    "licences:check": "node scripts/check-licences.mjs",
+    "check:ignored-source": "node scripts/check-ignored-source.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.4.6",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  }
+}

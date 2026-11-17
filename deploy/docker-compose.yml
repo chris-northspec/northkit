@@ -1,0 +1,87 @@
+# NorthKit: the whole stack the customer runs. Make deploy/.env first (sh deploy/install.sh).
+#   docker compose -f deploy/docker-compose.yml up -d
+# `migrate` runs once and exits; web and worker wait for it.
+name: northkit
+
+x-app-env: &app-env
+  NORTHKIT_DB_HOST: db
+  NORTHKIT_DB_PORT: '5432'
+  NORTHKIT_DB_NAME: ${NORTHKIT_DB_NAME:-northkit}
+  NORTHKIT_APP_DB_PASSWORD: ${NORTHKIT_APP_DB_PASSWORD:?set NORTHKIT_APP_DB_PASSWORD in deploy/.env}
+  NORTHKIT_SECRET_KEY: ${NORTHKIT_SECRET_KEY:?set NORTHKIT_SECRET_KEY in deploy/.env}
+  NORTHKIT_SESSION_IDLE_MINUTES: ${NORTHKIT_SESSION_IDLE_MINUTES:-720}
+  NORTHKIT_SESSION_ABSOLUTE_HOURS: ${NORTHKIT_SESSION_ABSOLUTE_HOURS:-24}
+  NORTHKIT_COOKIE_SECURE: ${NORTHKIT_COOKIE_SECURE:-true}
+  NORTHKIT_SETUP_CODE: ${NORTHKIT_SETUP_CODE:-}
+  NORTHKIT_PUBLIC_URL: ${NORTHKIT_PUBLIC_URL:-}
+  # Passed through only so the web container refuses to start if it is set: the demo
+  # link works under `pnpm dev` only (docs/demo-link.md).
+  NORTHKIT_DEMO_ORIGIN: ${NORTHKIT_DEMO_ORIGIN:-}
+  NORTHKIT_FILES_DIR: /data/files
+  TZ: UTC
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: ${NORTHKIT_DB_NAME:-northkit}
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Bound to this machine only. Remove the mapping if nothing outside Docker needs the database.
+      - '127.0.0.1:${NORTHKIT_DB_HOST_PORT:-5450}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: tools }
+    command: ['pnpm', 'db:migrate']
+    environment:
+      <<: *app-env
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      NORTHKIT_READONLY_DB_PASSWORD: ${NORTHKIT_READONLY_DB_PASSWORD:-}
+    depends_on:
+      db: { condition: service_healthy }
+
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    restart: unless-stopped
+    environment: *app-env
+    volumes:
+      # Item photos and certificates (from Sprint 2): on the customer's disk, served only through permission checks.
+      - files:/data/files
+    ports:
+      - '${NORTHKIT_WEB_HOST_PORT:-3030}:3000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/manifest.webmanifest').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    build: { context: .., dockerfile: deploy/Dockerfile, target: tools }
+    command: ['pnpm', '--filter', '@northkit/worker', 'start']
+    restart: unless-stopped
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:
+  files:
