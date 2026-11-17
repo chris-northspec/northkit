@@ -1,0 +1,163 @@
+/* NorthSpec design tokens: the single source of colour, type, radius and spacing.
+   Token names and shared values follow the family house style as NorthSlot uses it
+   (northspec-standards brand/tokens/tokens.css; S7-11, Chris, 15 Nov 2026). NorthKit
+   overrides only its accent family (Kit Teal, Teal Mist, Kit Teal Light) and adds its own
+   status set. Never hard-code a colour, size or spacing value in app.css that isn't one
+   of these. */
+
+:root {
+  /* ---- Brand palette (the NorthSpec suite) ---- */
+  --northspec-blue: #1e4fd6; /* primary mark colour; also the focus ring */
+  --northspec-ink: #1b1f24; /* Ink: text, and the sidebar */
+  --northspec-slate: #575f6b; /* secondary text (4.5:1 on Paper) */
+  --northspec-paper: #f5f3ee; /* Paper: the page */
+  --northspec-navy: #18224a; /* Deep Navy: the page in dark mode */
+
+  /* ---- Product accent: NorthKit (brand/tokens/accent.css) ---- */
+  --accent: #0e7490; /* Kit Teal, 5.4:1 on white */
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+  --accent-weak: #e3f2f6; /* Teal Mist: selected rows, chips, the current filter */
+  --accent-light: #7fd0e3; /* Kit Teal Light: marks on the Ink sidebar and in dark mode */
+  --colour-on-accent: #ffffff; /* text and icons on an --accent fill (primary buttons) */
+  /* Accent used AS text: a touch darker, so it keeps 4.5:1 on Teal Mist (6.9:1). */
+  --accent-text: color-mix(in srgb, var(--accent) 90%, black);
+  /* The active-nav bar on the Ink sidebar: Kit Teal Light keeps 3:1 on --sidebar-active. */
+  --accent-on-dark: var(--accent-light);
+
+  /* The accent is for primary buttons, the active nav item and selected things only.
+     Links, focus rings, information and statuses each have their own colour below. */
+
+  /* ---- Neutrals ---- */
+  --colour-bg: var(--northspec-paper); /* the page */
+  --colour-card: #ffffff; /* cards, tables, panels, inputs on the page */
+  --colour-surface: #f7f6f2; /* a quiet fill inside a card: table heads, hover */
+  --colour-border: #e2ded4;
+  /* Borders of inputs, buttons and other controls: 3:1 non-text contrast (WCAG 1.4.11)
+     on card, surface and Paper (D11). */
+  --colour-border-strong: #7d8490;
+  --colour-text: var(--northspec-ink);
+  --colour-text-muted: var(--northspec-slate);
+  --colour-skeleton: #e9e6de;
+  --colour-link: var(--colour-text); /* underlined, so never told apart by colour alone */
+  --colour-focus: var(--northspec-blue);
+
+  /* ---- Sidebar (the staff shell): Ink in light mode, a darker navy in dark ---- */
+  --sidebar-bg: var(--northspec-ink);
+  --sidebar-text: #e8eaee;
+  --sidebar-muted: #a7aeba;
+  --sidebar-active: #2b3038;
+  --sidebar-focus: #9db7ff;
+  --sidebar-width: 15rem;
+  --colour-logo-tile: #ffffff;
+
+  /* ---- Messages (never shown by colour alone: pair with a word or icon) ---- */
+  --colour-success: #0e7c45;
+  --colour-warning: #8a5d00;
+  --colour-danger: #b42318;
+  --colour-info: var(--northspec-blue);
+  --colour-warning-bg: #fdf0c4; /* a quiet warning fill (the not-yet-ready offline note) */
+
+  /* ---- NorthKit statuses (issues, jobs, inspections, compliance, assets): their own
+     text-and-tint pairs, never the accent, never on a button, always with a word ---- */
+  --status-neutral-text: #3d4451; /* new, triaged, assigned, planned, scheduled */
+  --status-neutral-bg: #eceef1;
+  --status-info-text: #1d4ed8; /* accepted, in progress, job raised */
+  --status-info-bg: #e4ecff;
+  --status-attention-text: #7a4f00; /* due, due soon, on hold, awaiting verification */
+  --status-attention-bg: #fdf0c4;
+  --status-good-text: #146c3a; /* compliant, pass, done, closed (verified), in service */
+  --status-good-bg: #dff3e6;
+  --status-problem-text: #b42318; /* overdue, failed, critical, out of service */
+  --status-problem-bg: #fdecea;
+  --status-closed-text: #575f6b; /* closed, cancelled, disposed, not applicable */
+  --status-closed-bg: #eff0f2;
+
+  /* ---- Type: Inter for everything you read; Space Grotesk for titles and big figures.
+     Both self-hosted from @fontsource (OFL-1.1, font files only). ---- */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* ---- Spacing scale (use ONLY these) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+
+  /* ---- Touch target: gloves-friendly (CLAUDE.md), above WCAG 2.2's 24 px minimum ---- */
+  --target-min: 44px;
+
+  /* ---- Layout ---- */
+  --content-max: 90rem; /* the widest a page's content runs on a big screen */
+  --topbar-height: 3.75rem;
+
+  /* ---- Radius ---- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* ---- Shadow ---- */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.05);
+  --shadow-panel: 8px 0 24px rgba(0, 0, 0, 0.25); /* the menu panel over the page */
+
+  color-scheme: light dark;
+}
+
+/* Dark values: Deep Navy pages. Keep every text colour and its surface coming from these. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --colour-bg: var(--northspec-navy);
+    --colour-card: #1f2a56;
+    --colour-surface: #253163;
+    --colour-border: #36437f;
+    --colour-border-strong: #8791b5;
+    --colour-text: #f2f4f7;
+    --colour-text-muted: #b4bcd0;
+    --colour-skeleton: #2c3870;
+    --colour-focus: #9db7ff;
+    --accent-weak: color-mix(in srgb, var(--accent) 35%, #18224a);
+    /* Kit Teal Light as text on navy keeps 4.5:1. */
+    --accent-text: var(--accent-light);
+    --sidebar-bg: #10173a;
+    --sidebar-muted: #a7b0c8;
+    --sidebar-active: #1e2852;
+    --colour-success: #47cd89;
+    --colour-warning: #fdb022;
+    --colour-danger: #fb857b;
+    --colour-info: #9db7ff;
+    --colour-warning-bg: #4a3b14;
+    --status-neutral-text: #d3d9e5;
+    --status-neutral-bg: #2f3b70;
+    --status-info-text: #b3c8ff;
+    --status-info-bg: #263b7e;
+    --status-attention-text: #fad67e;
+    --status-attention-bg: #4a3b14;
+    --status-good-text: #90e4b0;
+    --status-good-bg: #1b4a47;
+    --status-problem-text: #ffada6;
+    --status-problem-bg: #512639;
+    --status-closed-text: #b4bcd0;
+    --status-closed-bg: #283462;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+}

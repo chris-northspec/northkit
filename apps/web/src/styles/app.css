@@ -1,0 +1,2381 @@
+/* NorthKit app styles: hand-written on the NorthSpec tokens (tokens.css). Layout,
+   then components. Every interactive target is at least --target-min (44 px) for
+   gloved hands; status always carries a word, never colour alone. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Whatever the browser scrolls to (a focused check report, an anchor) lands clear of the
+     sticky top bar, never under it (WCAG 2.4.11). */
+  scroll-padding-top: calc(var(--topbar-height) + var(--space-4));
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--colour-text);
+  background: var(--colour-bg);
+}
+
+h1,
+h2,
+h3 {
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-3);
+}
+/* The page title is a name, so it takes the display face; everything else reads in Inter. */
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  letter-spacing: -0.01em;
+}
+@media (min-width: 48rem) {
+  h1 {
+    font-size: var(--text-3xl);
+  }
+}
+h2 {
+  font-size: var(--text-xl);
+  margin-top: var(--space-5);
+}
+h3 {
+  font-size: var(--text-lg);
+}
+p {
+  margin: 0 0 var(--space-3);
+}
+
+/* Links are underlined text, not the accent: the accent is for primary buttons, the
+   active nav item and selected things (house style). */
+a {
+  color: var(--colour-link);
+  text-underline-offset: 0.15em;
+}
+a:hover {
+  color: var(--colour-link);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.muted {
+  color: var(--colour-text-muted);
+}
+.small {
+  font-size: var(--text-sm);
+}
+.mono {
+  font-family: var(--font-mono);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.stack > * + * {
+  margin-top: var(--space-3);
+}
+.plain {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------- app shell */
+/* The family house style (S7-11, as NorthSlot): a dark Ink sidebar on the left from
+   1024 px with the mark, the menu and the signed-in person; one slim top bar across the
+   content (section name; site filter, search, notifications, Report a problem). Below
+   1024 px the top bar holds the mark and a Menu button, and the menu opens as a panel
+   from the left. Source order: skip links, menu, top bar, page. */
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: calc(-1 * var(--space-10));
+  z-index: 40;
+  padding: var(--space-2) var(--space-4);
+  background: var(--colour-card);
+  color: var(--colour-text);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-sm);
+}
+.skip-link:focus {
+  top: var(--space-2);
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* The demo row is empty (no height) unless the demo link's strip is shown. */
+  grid-template-rows: auto auto 1fr auto auto;
+  grid-template-areas: 'demo' 'top' 'main' 'side' 'foot';
+  min-height: 100vh;
+}
+
+/* ---- The sidebar (and, below 1024 px, the menu panel) ---- */
+.sidebar {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+.sidebar:focus {
+  outline: none;
+}
+.sidebar :focus-visible,
+.sidebar:focus-visible {
+  outline: 2px solid var(--sidebar-focus);
+  outline-offset: 2px;
+}
+.sidebar a {
+  color: var(--sidebar-text);
+}
+.sidebar .nav-list a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--sidebar-text);
+  text-decoration: none;
+}
+.sidebar .nav-list a:hover {
+  background: var(--sidebar-active);
+  color: var(--sidebar-text);
+}
+/* The current page: weight, a fill and a Kit Teal Light bar, so the bar is never the
+   only cue (and aria-current for screen readers). */
+.sidebar .nav-list a[aria-current='page'] {
+  background: var(--sidebar-active);
+  font-weight: var(--weight-semibold);
+  box-shadow: inset 3px 0 0 var(--accent-on-dark);
+}
+.sidebar .nav-heading {
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sidebar-muted);
+}
+.nav-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-count {
+  margin-left: auto;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent-light);
+  color: var(--northspec-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+/* Only in the panel (below 1024 px): Search, where the top bar has no room for it. */
+.nav-compact-only {
+  display: none;
+}
+.sidebar-person {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--sidebar-active);
+  font-size: var(--text-sm);
+}
+.sidebar-person a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  font-weight: var(--weight-medium);
+}
+.sidebar-person .muted {
+  color: var(--sidebar-muted);
+}
+.sidebar-person .button {
+  background: transparent;
+  border-color: var(--sidebar-muted);
+  color: var(--sidebar-text);
+}
+.sidebar-person .button:hover {
+  background: var(--sidebar-active);
+  border-color: var(--sidebar-text);
+}
+
+/* ---- The brand: the NorthKit mark and name (the customer's organisation under it) ---- */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+.brand:hover {
+  color: var(--colour-text);
+}
+.brand img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: var(--leading-tight);
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+}
+.wordmark-kit {
+  color: var(--accent-text);
+}
+.brand-org {
+  font-size: var(--text-xs);
+  color: var(--colour-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar .brand,
+.sidebar .brand:hover {
+  color: var(--sidebar-text);
+}
+.sidebar .wordmark-kit {
+  color: var(--accent-light);
+}
+.sidebar .brand-org {
+  color: var(--sidebar-muted);
+}
+
+/* ---- The top bar: one slim row ---- */
+.topbar {
+  grid-area: top;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--topbar-height);
+  padding: var(--space-2) var(--space-4);
+  background: var(--colour-card);
+  border-bottom: 1px solid var(--colour-border);
+}
+.topbar-title {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--weight-semibold);
+  color: var(--colour-text-muted);
+}
+.topbar-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.topbar-tools {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+.topbar .search {
+  flex: 0 1 13rem;
+  min-width: 0;
+}
+.topbar .search input {
+  min-width: 5rem;
+}
+.topbar .site-select select {
+  max-width: 12rem;
+}
+.site-fixed {
+  margin: 0;
+  white-space: nowrap;
+}
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--colour-text);
+  background: var(--colour-card);
+}
+.bell:hover {
+  background: var(--colour-surface);
+  color: var(--colour-text);
+}
+.bell svg {
+  width: 22px;
+  height: 22px;
+}
+.bell-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 1.25rem;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--colour-on-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.25rem;
+  text-align: center;
+}
+.button.menu-button,
+.button.menu-close {
+  display: none;
+}
+.report-button {
+  white-space: nowrap;
+}
+/* One row at 1280: buttons never wrap their words; the search box gives way first. */
+.topbar .button {
+  white-space: nowrap;
+}
+
+/* ---- The page ---- */
+.main {
+  grid-area: main;
+  width: 100%;
+  max-width: var(--content-max);
+  min-width: 0;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+}
+.foot {
+  grid-area: foot;
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--colour-border);
+}
+.powered-by {
+  font-size: var(--text-xs);
+  color: var(--colour-text-muted);
+  text-align: center;
+}
+
+@keyframes menu-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+/* Below 1024 px (tablet and phone): the top bar carries the mark and the Menu button;
+   the menu opens as a panel from the left. Without JavaScript (no data-menu) the menu
+   stays in the page, after the content. */
+@media (max-width: 63.99rem) {
+  .topbar-title,
+  .topbar .search {
+    display: none;
+  }
+  .button.menu-button {
+    display: inline-flex;
+  }
+  .nav-compact-only {
+    display: block;
+  }
+  .sidebar[data-menu] {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(20rem, 88vw);
+    overflow-y: auto;
+    box-shadow: var(--shadow-panel);
+    animation: menu-in 150ms ease-out;
+  }
+  .sidebar[data-menu='closed'] {
+    display: none;
+  }
+  .sidebar[data-menu] .button.menu-close {
+    display: inline-flex;
+    align-self: flex-end;
+    background: transparent;
+    border-color: var(--sidebar-muted);
+    color: var(--sidebar-text);
+  }
+}
+@media (min-width: 48rem) {
+  .main {
+    padding: var(--space-6);
+  }
+  .topbar {
+    padding: var(--space-2) var(--space-6);
+  }
+}
+@media (min-width: 64rem) {
+  .shell {
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      'side demo'
+      'side top'
+      'side main'
+      'side foot';
+    /* The sidebar's colour runs the whole length of a long page. */
+    background: linear-gradient(
+      to right,
+      var(--sidebar-bg) var(--sidebar-width),
+      var(--colour-card) var(--sidebar-width)
+    );
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .topbar-brand {
+    display: none;
+  }
+}
+
+/* Phone (under 768 px): one row (mark, the site as a short chip, Menu). Notifications
+   are in the menu; Report a problem is a fixed button at the bottom right, clear of the
+   iOS home bar. */
+@media (max-width: 47.99rem) {
+  .topbar {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+  }
+  .topbar .brand-org,
+  .topbar .bell {
+    display: none;
+  }
+  .topbar-tools {
+    gap: var(--space-2);
+  }
+  .topbar .site-select .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .topbar .site-select select {
+    max-width: 8.5rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--accent-weak);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+  .topbar .site-fixed {
+    max-width: 8.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: var(--accent-weak);
+    color: var(--accent-text);
+    font-size: var(--text-sm);
+  }
+  .site-fixed-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  /* On a form screen the floating button steps aside (it is in the menu too). */
+  .button.report-button-aside {
+    display: none;
+  }
+  .report-button {
+    position: fixed;
+    z-index: 20;
+    right: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    box-shadow: var(--shadow-md);
+  }
+  .main {
+    padding-bottom: calc(var(--space-10) + var(--space-6) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ---------------------------------------------------------------- notices */
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--colour-border);
+  border-left-width: 6px;
+  background: var(--colour-card);
+}
+.notice-info {
+  border-left-color: var(--accent);
+}
+.notice-warning {
+  border-left-color: var(--colour-warning);
+}
+.notice-critical {
+  border-left-color: var(--colour-danger);
+}
+.licence-banner {
+  margin: 0 0 var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------------------------------------------------------------- buttons and forms */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--colour-card);
+  color: var(--colour-text);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+}
+.button:hover {
+  background: var(--colour-surface);
+  color: var(--colour-text);
+}
+.button[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+.button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--colour-on-accent);
+}
+.button-primary:hover {
+  background: var(--accent-hover);
+  color: var(--colour-on-accent);
+}
+.button-danger {
+  border-color: var(--colour-danger);
+  color: var(--colour-danger);
+}
+.button-link {
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  text-decoration: underline;
+  padding: 0 var(--space-2);
+}
+
+.form {
+  max-width: 40rem;
+}
+form.inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+details > summary.button {
+  width: max-content;
+  list-style: none;
+  margin: var(--space-3) 0;
+}
+details > summary.button::-webkit-details-marker {
+  display: none;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.field label,
+.label {
+  font-weight: var(--weight-medium);
+}
+.field input,
+.field select,
+.field textarea,
+.input {
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--colour-card);
+  color: var(--colour-text);
+  font: inherit;
+  width: 100%;
+}
+.field textarea {
+  min-height: 8rem;
+}
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'] {
+  border-color: var(--colour-danger);
+  border-width: 2px;
+}
+.field-check {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+}
+.field-check input {
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  accent-color: var(--accent);
+}
+.hint {
+  font-size: var(--text-sm);
+  color: var(--colour-text-muted);
+}
+.field-error {
+  font-size: var(--text-sm);
+  color: var(--colour-danger);
+  font-weight: var(--weight-medium);
+}
+.field-error::before {
+  content: 'Error: ';
+}
+.form-error,
+.form-message {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 6px solid var(--colour-danger);
+  background: var(--colour-card);
+}
+.form-message {
+  border-left-color: var(--colour-success);
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
+fieldset {
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+}
+legend {
+  font-weight: var(--weight-semibold);
+  padding: 0 var(--space-2);
+}
+
+.search {
+  display: flex;
+  gap: var(--space-2);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+}
+.site-select {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.site-select select {
+  min-height: var(--target-min);
+  max-width: 16rem;
+}
+/* With JavaScript the choice applies at once; Show stays for keyboard users. */
+.site-filter-show-applies:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- content */
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.page-head h1 {
+  margin: 0;
+}
+.breadcrumbs {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+.breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+
+.panel {
+  box-shadow: var(--shadow-card);
+  background: var(--colour-card);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+.panel > h2:first-child {
+  margin-top: 0;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.tile {
+  box-shadow: var(--shadow-card);
+  display: block;
+  background: var(--colour-card);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+a.tile:hover {
+  border-color: var(--accent);
+  color: var(--colour-text);
+}
+.tile-figure {
+  font-family: var(--font-display);
+  display: block;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+.tile-label {
+  color: var(--colour-text-muted);
+}
+
+.table-wrap {
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+  background: var(--colour-card);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+}
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--colour-border);
+  vertical-align: top;
+}
+.table th {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--colour-text-muted);
+  background: var(--colour-surface);
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.table td a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+}
+.table td.num a {
+  justify-content: flex-end;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phone: tables become stacked cards; each cell shows its column name. */
+@media (max-width: 40rem) {
+  .table-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .table-cards tr {
+    display: block;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--colour-border);
+  }
+  .table-cards td {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-1) 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .table-cards td.num {
+    text-align: left;
+  }
+  .table-cards td::before {
+    content: attr(data-label);
+    flex: 0 0 7rem;
+    color: var(--colour-text-muted);
+    font-size: var(--text-sm);
+  }
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-5);
+  margin: 0 0 var(--space-4);
+}
+.details dt {
+  color: var(--colour-text-muted);
+}
+.details dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 40rem) {
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .details dd {
+    margin-bottom: var(--space-3);
+  }
+}
+
+/* Status badges: a word and a shape, never colour alone. */
+/* Status pills (house style): the word carries the meaning; the tint and the dot are a
+   second cue, never the only one. Each tone is one of NorthKit's status pairs. */
+.badge {
+  --status-text: var(--status-neutral-text);
+  --status-bg: var(--status-neutral-bg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.125rem var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--status-bg);
+  color: var(--status-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+.badge::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge-info {
+  --status-text: var(--status-info-text);
+  --status-bg: var(--status-info-bg);
+}
+.badge-warning {
+  --status-text: var(--status-attention-text);
+  --status-bg: var(--status-attention-bg);
+}
+.badge-success {
+  --status-text: var(--status-good-text);
+  --status-bg: var(--status-good-bg);
+}
+.badge-danger {
+  --status-text: var(--status-problem-text);
+  --status-bg: var(--status-problem-bg);
+}
+/* Closed and cancelled: dashed and hollow-dotted, so finished work reads as set aside. */
+.badge-closed {
+  --status-text: var(--status-closed-text);
+  --status-bg: var(--status-closed-bg);
+  border-style: dashed;
+  border-color: currentColor;
+}
+.badge-closed::before {
+  background: transparent;
+  border: 1.5px solid currentColor;
+}
+
+/* Empty and error states: say why and what to do (studio standard 02). */
+.empty,
+.state-error {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  background: var(--colour-card);
+  border: 1px dashed var(--colour-border-strong);
+  border-radius: var(--radius-lg);
+}
+.state-error {
+  border-style: solid;
+  border-color: var(--colour-danger);
+}
+.empty .form-actions,
+.state-error .form-actions {
+  justify-content: center;
+}
+
+/* Loading: skeletons shaped like the content, no full-page spinner. */
+.skeleton {
+  display: block;
+  background: var(--colour-skeleton);
+  border-radius: var(--radius-sm);
+  height: 1.25rem;
+  margin-bottom: var(--space-3);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.skeleton-title {
+  height: 2rem;
+  width: 40%;
+}
+.skeleton-tile {
+  height: 6rem;
+  border-radius: var(--radius-lg);
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Roles: the switch matrix (area x View, Create, Edit, Approve). */
+.matrix td,
+.matrix th {
+  text-align: center;
+}
+.matrix th[scope='row'] {
+  text-align: left;
+  color: var(--colour-text);
+  background: var(--colour-card);
+  font-size: var(--text-base);
+}
+.matrix input[type='checkbox'] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--accent);
+}
+.matrix label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  cursor: pointer;
+}
+
+.tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.steps {
+  padding-left: var(--space-5);
+}
+.qr {
+  display: block;
+  width: 12rem;
+  padding: var(--space-3);
+  /* Scanners need a light quiet zone, in dark mode too. */
+  background: var(--colour-logo-tile);
+  border-radius: var(--radius-md);
+}
+.qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.secret {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  letter-spacing: 0.05em;
+}
+pre.licence {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+/* Commands to copy (the reporting login, S7-3): wraps on a phone, never scrolls sideways. */
+pre.code-block {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: var(--space-3);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-sm);
+  background: var(--colour-card);
+}
+
+/* ---------------------------------------------------------------- sign-in pages */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+.auth-card {
+  width: 100%;
+  max-width: 30rem;
+  background: var(--colour-card);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+}
+.auth-card-wide {
+  max-width: 44rem;
+}
+.auth-product {
+  margin-bottom: var(--space-4);
+}
+.auth-links {
+  margin-top: var(--space-4);
+}
+
+/* Sign in, as ClearRate (house style): the picture on the left and the sign-in card on the
+   right from 1024 px; on a phone and tablet, the card alone. The picture is decorative:
+   the card says everything. */
+.auth-hero {
+  display: none;
+}
+.illustration-hero {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+}
+.illustration-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.auth-tagline {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--colour-text);
+}
+@media (min-width: 64rem) {
+  .auth-page-hero {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: var(--space-8);
+  }
+  .auth-page-hero .powered-by {
+    flex-basis: 100%;
+    text-align: center;
+  }
+  .auth-page-hero .auth-hero {
+    display: block;
+    flex: 0 1 30rem;
+  }
+}
+
+.space-above {
+  margin-top: var(--space-5);
+}
+
+.block {
+  display: block;
+}
+
+/* Photos: previews before upload, and thumbnails on issues and jobs. */
+.photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+}
+.photo-strip img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--colour-border);
+}
+.photo-strip a {
+  display: block;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+}
+
+/* My jobs: a card per job, the whole title tappable. */
+.job-card-link {
+  display: block;
+  min-height: var(--target-min);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+.job-card-link strong {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.row a[aria-current='page'] {
+  background: var(--accent-weak);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+/* ---------------------------------------------------------------- inspections (Sprint 3) */
+
+/* The phone runner: one column, big targets, the save and submit buttons always in
+   thumb's reach at the bottom. */
+.runner {
+  max-width: 44rem;
+  padding-bottom: calc(var(--target-min) * 3);
+}
+.runner-head h1 {
+  margin-bottom: var(--space-2);
+}
+.runner-section > .question + .question,
+.runner-section > .question + .repeat-group,
+.runner-section > .repeat-group + .question {
+  margin-top: var(--space-4);
+}
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--colour-card);
+}
+.question-prompt {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-lg);
+  padding: 0;
+}
+.question-failed {
+  border-color: var(--colour-danger);
+  border-left-width: 6px;
+}
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: calc(var(--target-min) + var(--space-2));
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--colour-card);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+.choice input {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--accent);
+  flex: none;
+}
+.choice:has(input:checked) {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: var(--accent-weak);
+}
+.choice:has(input:focus-visible) {
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 2px;
+}
+.with-unit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.with-unit input {
+  max-width: 12rem;
+}
+.fail-block,
+.confirm-box {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--colour-border);
+  border-left: 6px solid var(--colour-danger);
+}
+.fail-note {
+  margin: 0;
+}
+.repeat-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.repeat-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--colour-border-strong);
+}
+.repeat-item > .button,
+.repeat-group > .button {
+  align-self: flex-start;
+}
+.runner-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: var(--space-5);
+  padding: var(--space-3) 0;
+  background: var(--colour-surface);
+  border-top: 1px solid var(--colour-border);
+}
+.runner-status {
+  margin: 0 0 var(--space-2);
+}
+.runner-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.runner-buttons > :only-child {
+  grid-column: 1 / -1;
+}
+.runner-buttons .button {
+  min-height: calc(var(--target-min) + var(--space-3));
+}
+.file-button {
+  align-self: flex-start;
+  position: relative;
+}
+.file-button:focus-within {
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 2px;
+}
+.photo-strip li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.signature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+.signature img {
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-sm);
+}
+.signature-pad {
+  width: 100%;
+  max-width: 36rem;
+  aspect-ratio: 3 / 1;
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-md);
+  touch-action: none;
+}
+.reference img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.question-list {
+  padding-left: var(--space-5);
+}
+.question-list > li + li {
+  margin-top: var(--space-4);
+}
+.question-summary p {
+  margin-bottom: var(--space-1);
+}
+.option-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--colour-border);
+}
+.finding {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--colour-border);
+}
+.sync-status:empty {
+  display: none;
+}
+.sync-status .notice {
+  margin: 0 0 var(--space-4);
+}
+/* The runner's "Ready for offline" line: words, not colour. */
+.offline-ready {
+  font-size: var(--text-sm);
+  color: var(--colour-text-muted);
+  margin: 0 0 var(--space-3);
+}
+.offline-ready[data-offline-ready='ready'] {
+  color: var(--colour-text);
+}
+
+/* ---------------------------------------------------------------- dashboard (B-3) */
+/* Rings and bars are hand-written SVG. Red, amber and green always come with a word
+   or an icon; big numbers use tabular figures. */
+
+.fill-success {
+  fill: var(--colour-success);
+}
+.fill-warning {
+  fill: var(--colour-warning);
+}
+.fill-danger {
+  fill: var(--colour-danger);
+}
+.fill-neutral-strong {
+  fill: color-mix(in srgb, var(--colour-text-muted) 80%, var(--colour-card));
+}
+.fill-neutral {
+  fill: color-mix(in srgb, var(--colour-text-muted) 50%, var(--colour-card));
+}
+.fill-neutral-weak {
+  fill: color-mix(in srgb, var(--colour-text-muted) 25%, var(--colour-card));
+}
+.fill-bg-danger {
+  background: var(--colour-danger);
+}
+.fill-bg-warning {
+  background: var(--colour-warning);
+}
+.fill-bg-neutral-strong {
+  background: color-mix(in srgb, var(--colour-text-muted) 80%, var(--colour-card));
+}
+.fill-bg-neutral {
+  background: color-mix(in srgb, var(--colour-text-muted) 50%, var(--colour-card));
+}
+.fill-bg-neutral-weak {
+  background: color-mix(in srgb, var(--colour-text-muted) 25%, var(--colour-card));
+}
+.stroke-success {
+  stroke: var(--colour-success);
+}
+.stroke-warning {
+  stroke: var(--colour-warning);
+}
+.stroke-danger {
+  stroke: var(--colour-danger);
+}
+.tone-danger {
+  color: var(--colour-danger);
+  font-weight: var(--weight-semibold);
+}
+.tone-warning {
+  color: var(--colour-warning);
+}
+
+.health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+.health-text {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.health-text h2 {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+}
+.health-band {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-2);
+}
+.ring {
+  flex: none;
+}
+.ring-large {
+  width: 9rem;
+  height: 9rem;
+}
+.ring-small {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.ring-track {
+  fill: none;
+  stroke: var(--colour-border);
+  stroke-width: 12;
+}
+.ring-value {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.ring-number {
+  font-family: var(--font-display);
+  fill: var(--colour-text);
+  font-size: 2.4rem;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.ring-small .ring-number {
+  font-size: 2.9rem;
+}
+.ring-of {
+  fill: var(--colour-text-muted);
+  font-size: 0.8rem;
+}
+.band {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+.band-success {
+  color: var(--colour-success);
+}
+.band-warning {
+  color: var(--colour-warning);
+}
+.band-danger {
+  color: var(--colour-danger);
+}
+.band-icon {
+  flex: none;
+}
+.band-icon .icon-stroke {
+  fill: none;
+  stroke: var(--colour-card);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.band-icon .icon-dot {
+  fill: var(--colour-card);
+}
+
+.how {
+  margin-top: var(--space-2);
+}
+.how summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  cursor: pointer;
+  color: var(--accent-text);
+  font-weight: var(--weight-medium);
+}
+.how-table {
+  margin: var(--space-2) 0 var(--space-3);
+}
+.how-table tbody th {
+  font-weight: var(--weight-medium);
+  color: var(--colour-text);
+  background: none;
+  font-size: var(--text-base);
+}
+
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+}
+.dash-cards > li {
+  display: flex;
+}
+.card {
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  background: var(--colour-card);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  color: var(--colour-text);
+}
+.card-link {
+  text-decoration: none;
+  min-height: var(--target-min);
+}
+.card-link:hover {
+  border-color: var(--accent);
+  color: var(--colour-text);
+}
+.card-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--colour-text-muted);
+}
+.card-figure,
+.stat-figure {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+/* The Compliance card names what needs attention first, overdue safety requirements first (D44). */
+.card-attention {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--colour-border);
+}
+
+.card-stats {
+  display: grid;
+  gap: var(--space-2);
+}
+.stat-link {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: var(--space-1) var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border-radius: var(--radius-md);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+.stat-link:hover {
+  background: var(--colour-surface);
+  color: var(--colour-text);
+}
+.stat-link .stat-figure {
+  grid-row: 1;
+  grid-column: 1;
+  font-size: var(--text-2xl);
+}
+.stat-link .stat-label {
+  grid-row: 1;
+  grid-column: 2;
+}
+.stat-label {
+  text-decoration: underline;
+  text-decoration-color: var(--colour-border-strong);
+  text-underline-offset: 0.2em;
+}
+.stat-flag {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  color: var(--colour-card);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+}
+.stat-danger .stat-figure {
+  color: var(--colour-danger);
+}
+.stat-danger .stat-flag {
+  background: var(--colour-danger);
+}
+.stat-warning .stat-figure {
+  color: var(--colour-warning);
+}
+.stat-warning .stat-flag {
+  background: var(--colour-warning);
+}
+
+.priority-bar svg {
+  display: block;
+  width: 100%;
+  height: 0.75rem;
+}
+.bar-track {
+  fill: var(--colour-surface);
+}
+.bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--colour-text-muted);
+}
+.bar-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.bar-legend .num {
+  color: var(--colour-text);
+  font-weight: var(--weight-semibold);
+}
+.swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+}
+
+.site-health {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.site-choose {
+  min-height: var(--target-min);
+  padding: 0;
+  font: inherit;
+  font-weight: var(--weight-medium);
+  text-align: left;
+  cursor: pointer;
+}
+.sites-table td {
+  vertical-align: middle;
+}
+
+.skeleton-ring {
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  margin: 0;
+}
+.skeleton-card {
+  height: 9rem;
+  border-radius: var(--radius-lg);
+  margin: 0;
+}
+
+/* Lists: the count and the filters in use, each removable (B-3). */
+.list-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-4);
+}
+.list-count {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  background: var(--accent-weak);
+  color: var(--accent-text);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+.chip-x {
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+@media (max-width: 40rem) {
+  .health {
+    gap: var(--space-3);
+  }
+  .ring-large {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+  .card-figure {
+    font-size: var(--text-2xl);
+  }
+  .dash-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------- Sprint 4: assets, PPM, calendar */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+  margin-top: var(--space-4);
+}
+.filters .field {
+  margin: 0;
+}
+.filters .form-actions {
+  margin: 0;
+}
+.check {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--accent);
+}
+.pager {
+  align-items: center;
+}
+.h3 {
+  font-size: var(--text-lg);
+  margin-top: 0;
+}
+
+.cal-nav {
+  align-items: center;
+  margin-top: var(--space-4);
+}
+.cal-title {
+  margin: 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+.cal-item {
+  display: block;
+  border-left: 4px solid var(--colour-border-strong);
+  padding-left: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.cal-item a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--target-min);
+  overflow-wrap: anywhere;
+}
+/* Colour only backs up the status word each item carries. */
+.cal-missed,
+.cal-overdue {
+  border-left-color: var(--colour-danger);
+}
+.cal-due {
+  border-left-color: var(--colour-warning);
+}
+.cal-done {
+  border-left-color: var(--colour-success);
+}
+.cal-planned,
+.cal-cancelled {
+  border-left-style: dashed;
+}
+.cal-kind {
+  display: block;
+  color: var(--colour-text-muted);
+  font-size: var(--text-sm);
+}
+.cal-month {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.cal-month th {
+  text-align: left;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--colour-border);
+}
+.cal-cell {
+  vertical-align: top;
+  border: 1px solid var(--colour-border);
+  padding: var(--space-2);
+  min-height: 6rem;
+  font-size: var(--text-sm);
+}
+.cal-outside {
+  background: var(--colour-surface);
+}
+.cal-today {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.cal-date {
+  display: block;
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-1);
+}
+.cal-date-long {
+  display: none;
+}
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.cal-day {
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  font-size: var(--text-sm);
+}
+.cal-day h3 {
+  font-size: var(--text-base);
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* On a phone the week, and the month, read as a list of days with something due. */
+@media (max-width: 47.99rem) {
+  .cal-week {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cal-month,
+  .cal-month tbody,
+  .cal-month tr,
+  .cal-month td {
+    display: block;
+    width: 100%;
+  }
+  .cal-month thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .cal-month .cal-empty,
+  .cal-month .cal-outside {
+    display: none;
+  }
+  .cal-cell {
+    border-width: 0 0 1px;
+    min-height: 0;
+  }
+  .cal-date-short {
+    display: none;
+  }
+  .cal-date-long {
+    display: inline;
+  }
+}
+
+/* ---------------------------------------------------------------- compliance (S5-6) */
+.plain-list {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.plain-list li {
+  margin-bottom: var(--space-1);
+}
+.block-notice {
+  display: block;
+  margin-top: var(--space-2);
+}
+.checks {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+}
+.apply-grid {
+  align-items: start;
+}
+
+/* History of events: newest first; a replaced record is kept, shown dimmed and labelled. */
+.event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.event {
+  border-left: 4px solid var(--colour-border-strong);
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.event p {
+  margin: 0 0 var(--space-1);
+}
+.event-replaced {
+  border-left-style: dashed;
+  color: var(--colour-text-muted);
+}
+.event-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The estate matrix: colour backs up an icon in every cell, and each cell is a link
+   whose text names the requirement, the site and the status. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.legend a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+.co-matrix {
+  border-collapse: collapse;
+}
+.co-matrix th,
+.co-matrix td {
+  border: 1px solid var(--colour-border);
+  padding: var(--space-1);
+  text-align: center;
+}
+.co-matrix th[scope='row'] {
+  text-align: left;
+  white-space: nowrap;
+  padding: var(--space-1) var(--space-2);
+}
+.co-matrix .mx-head {
+  vertical-align: bottom;
+  height: 11rem;
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.mx-head span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 10.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mx-cell {
+  display: inline-grid;
+  place-items: center;
+  width: var(--target-min);
+  height: var(--target-min);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--colour-border-strong);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  color: var(--colour-text);
+  background: var(--colour-card);
+}
+.legend .mx-cell {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+a.mx-cell:hover,
+a.mx-cell:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+.mx-compliant {
+  background: var(--colour-success);
+  border-color: var(--colour-success);
+  color: var(--colour-card);
+}
+.mx-due_soon,
+.mx-never_done {
+  background: var(--colour-warning-bg);
+  border-color: var(--colour-warning);
+  color: var(--colour-warning);
+}
+.mx-overdue,
+.mx-remedial_open {
+  background: var(--colour-danger);
+  border-color: var(--colour-danger);
+  color: var(--colour-card);
+}
+.mx-not_applicable {
+  color: var(--colour-text-muted);
+}
+.mx-none {
+  border-style: dashed;
+  border-color: var(--colour-border);
+}
+.matrix-phone {
+  display: none;
+}
+.mx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mx-list a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  min-height: var(--target-min);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--colour-border);
+  text-decoration: none;
+  color: var(--colour-text);
+}
+.mx-list a > span:first-child {
+  text-decoration: underline;
+  text-decoration-color: var(--colour-border-strong);
+}
+@media (max-width: 47.99rem) {
+  .matrix-wrap {
+    display: none;
+  }
+  .matrix-phone {
+    display: block;
+    margin-top: var(--space-4);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .mx-due_soon,
+  :root:not([data-theme='light']) .mx-never_done {
+    background: transparent;
+  }
+}
+
+/* Sprint 6: the contractor's job link (CT-3), phone-first; photo grids; kept line breaks. */
+.link-page .auth-card {
+  max-width: 40rem;
+}
+.pre-line {
+  white-space: pre-line;
+}
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.photo-grid img {
+  display: block;
+  width: 10rem;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid var(--colour-border);
+}
+.link-copy {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+  min-height: var(--target-min, 44px);
+}
+
+/* ---------------------------------------------------------------- reports (S7-1, S7-2) */
+.report-list {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+.report-list .card-title a {
+  color: inherit;
+}
+.report-exports {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
+}
+.inline-form {
+  display: inline;
+}
+.report-section {
+  margin-top: var(--space-5);
+}
+.report-table,
+.compare-table {
+  font-variant-numeric: tabular-nums;
+}
+.report-table tfoot th,
+.report-table tfoot td {
+  font-weight: var(--weight-semibold);
+  border-top: 2px solid var(--colour-border-strong);
+}
+.compare-table th a {
+  display: inline-block;
+  min-height: var(--target-min);
+  padding-block: var(--space-2);
+}
+.report-highlights li {
+  padding-block: var(--space-1);
+}
+
+/* ---------------------------------------------------------------- house style (S7-11) */
+
+/* Page header: a small context line, the title, a short description, and the page's
+   primary action on the right. */
+.page-head {
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.page-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.page-head-meta {
+  margin: 0;
+  color: var(--colour-text-muted);
+  font-size: var(--text-sm);
+}
+.page-head > p,
+.page-head-text > p:not(.page-head-meta) {
+  margin: 0;
+  color: var(--colour-text-muted);
+}
+
+/* Stat cards: label, big figure, detail, and "Needs attention" in words. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+}
+.kpi-cell {
+  display: flex;
+  min-width: 0;
+}
+.kpi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: var(--target-min);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-lg);
+  background: var(--colour-card);
+  box-shadow: var(--shadow-card);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+.kpi:hover {
+  border-color: var(--colour-text-muted);
+  color: var(--colour-text);
+}
+.kpi:hover .kpi-label {
+  text-decoration: underline;
+}
+.kpi-label {
+  color: var(--colour-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.kpi .kpi-value {
+  font-size: var(--text-3xl);
+}
+.kpi-detail {
+  color: var(--colour-text-muted);
+  font-size: var(--text-sm);
+}
+.kpi-note {
+  color: var(--colour-warning);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+.kpi-attention {
+  box-shadow:
+    var(--shadow-card),
+    inset 0 3px 0 var(--colour-warning);
+}
+
+/* A wide column beside a narrower panel; stacked on smaller screens. */
+.split {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+.split-main {
+  min-width: 0;
+}
+.split-main > .dash-cards {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+.needs-action {
+  min-width: 0;
+}
+.needs-action > h2 {
+  margin-top: 0;
+}
+.needs-action-list {
+  display: grid;
+  gap: var(--space-4);
+}
+.needs-action-list > li {
+  display: flex;
+}
+@media (min-width: 80rem) {
+  .split {
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  }
+}
+
+/* Selected rows and the current choice: Teal Mist, with a teal bar as a second cue. */
+.table tr[aria-current='true'] td,
+.table tr[aria-selected='true'] td {
+  background: var(--accent-weak);
+}
+.table tr[aria-current='true'] td:first-child,
+.table tr[aria-selected='true'] td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Quick actions (X-2, S7-6): a disclosure in the top bar. */
+.quick-actions {
+  position: relative;
+  /* Chrome lays out a closed details' content area under the summary: keep one row. */
+  height: var(--target-min);
+}
+.quick-actions > summary {
+  list-style: none;
+  white-space: nowrap;
+}
+/* In line with the top bar's other buttons: not the margin `details > summary.button`
+   gives a disclosure in a page (which pushed it 12 px down under the dev server). */
+.quick-actions > summary.button {
+  margin: 0;
+}
+.quick-actions > summary::-webkit-details-marker {
+  display: none;
+}
+.quick-actions-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-1));
+  z-index: 25;
+  min-width: 15rem;
+  padding: var(--space-2);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-md);
+  background: var(--colour-card);
+  box-shadow: var(--shadow-md);
+}
+.quick-actions-list a {
+  display: flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--colour-text);
+  text-decoration: none;
+}
+.quick-actions-list a:hover {
+  background: var(--colour-surface);
+}
+.nav-phone-only {
+  display: none;
+}
+@media (max-width: 47.99rem) {
+  .topbar .quick-actions {
+    display: none;
+  }
+  .nav-phone-only {
+    display: block;
+  }
+}
+
+/* The demo link's strip (docs/demo-link.md): words, not only colour. */
+.demo-strip {
+  grid-area: demo;
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+  text-align: center;
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  border-bottom: 1px solid var(--colour-border-strong);
+}
