@@ -3,7 +3,7 @@
 Sprint 0 (research) and Sprint 1 (foundation) are in sprint-0.md and sprint-1.md. Each later sprint gets its own prompt when it starts.
 
 ## Sprints 2 to 6
-2. Items, kinds, labels, QR, photos, import · 3. Check out/in, transfers, who-has-what, stocktake, offline · 4. Inspections, quarantine rule, certificates, reminders · 5. Dashboard, reports, exports, no-login fault reports · 6. Compliance pack, security and accessibility review, install/upgrade guides, release audit, tag `v1.0.0-rc1`.
+2. Items, kinds, labels, QR, photos, import; **also: finish the demo seed (store the ~600 generated items from `packages/core/src/dev/demo-company.ts`), and add demo-link support under Docker as well as dev** (Chris, 17 Nov 2026) · 3. Check out/in, transfers, who-has-what, stocktake, offline · 4. Inspections, quarantine rule, certificates, reminders · 5. Dashboard, reports, exports, no-login fault reports · 6. Compliance pack, security and accessibility review, install/upgrade guides, release audit, tag `v1.0.0-rc1`.
 
 
 ## Version 1 scope (for `docs/02-spec.md` and the roadmap)

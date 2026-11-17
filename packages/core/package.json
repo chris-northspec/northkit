@@ -1,0 +1,34 @@
+{
+  "name": "@northkit/core",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./retry": "./src/net/retry.ts",
+    "./demo": "./src/net/demo.ts",
+    "./decimal": "./src/decimal.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "seed": "tsx src/cli/seed.ts",
+    "demo-user": "tsx src/cli/demo-user.ts",
+    "create-admin": "tsx src/cli/create-admin.ts",
+    "reset-mfa": "tsx src/cli/reset-mfa.ts",
+    "licence-install": "tsx src/cli/licence-install.ts",
+    "seed-demo": "tsx src/cli/seed-demo.ts"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
+    "@northkit/db": "workspace:*",
+    "@northkit/licence": "workspace:*",
+    "zod": "^4.6.7",
+    "qrcode-generator": "^2.0.4"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
+    "jsqr": "^1.4.0"
+  }
+}

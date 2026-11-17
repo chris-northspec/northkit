@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - esbuild
+
+# sharp ships libvips under LGPL-3.0, which our licence rules forbid. Next only
+# uses it for image optimisation, which is switched off (images.unoptimized).
+ignoredOptionalDependencies:
+  - sharp
+
+# Dependency audit allow-list (K-decision K18, Chris, 17 Nov 2026). Narrow: one advisory ID,
+# nothing else. picomatch ReDoS: dev tooling only (ESLint and typescript-eslint), not shipped,
+# no patched version available. REVIEW BY 17 Dec 2026: remove this entry once a patch exists.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
