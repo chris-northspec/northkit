@@ -38,6 +38,7 @@ node_modules/
 /deploy/backups/
 /pgdata/
 /deploy/pgdata/
+/.data/
 
 # Logs and OS files
 *.log
