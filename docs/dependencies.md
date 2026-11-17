@@ -74,3 +74,4 @@ Approved by Chris on 13 Nov 2026 (OFL-1.1 on 14 Nov 2026) for NorthCore WMS and 
 | Package | Severity | Path | Status |
 | --- | --- | --- | --- |
 | minimatch < 11.0.1 | Moderate (GHSA-g3hv-75wg-m249, denial of service on crafted globs) | typescript-eslint → minimatch | Development only; not shipped. CI fails on high or critical only. Clears when typescript-eslint updates its dependency. |
+| picomatch <= 4.0.7 | High (GHSA-fc5q-39xc-vjpf, ReDoS) | eslint tooling: @next/eslint-plugin-next → fast-glob → micromatch; typescript-eslint → tinyglobby | Dev tooling only, not shipped, no patched version. **Allow-listed** in `pnpm-workspace.yaml` (K18), only this ID. **Review by 17 Dec 2026.** |
