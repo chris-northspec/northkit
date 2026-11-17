@@ -64,6 +64,11 @@ export async function updateSettingAction(_s: FormState, form: FormData): Promis
   return formAction(form, async () => {
     const key = text(form, 'key');
     const raw = text(form, 'value');
+    if (key === 'items.asset_number_prefix') {
+      await updateSetting(db(), actor, key, raw);
+      revalidatePath('/settings');
+      return { message: 'Saved.' };
+    }
     const parts = raw
       .split(',')
       .map((p) => p.trim())
