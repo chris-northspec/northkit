@@ -4,6 +4,44 @@
 
 Documented read-only views for Power BI and Excel (DB-10).
 
+## `reporting.items`
+
+One row per item with its depot, kind, location and kit, for Power BI and Excel. _(view)_
+
+| Column | Type | Null | Default | References | Description |
+| --- | --- | --- | --- | --- | --- |
+| `item_id` | uuid | yes |  |  | Item id (register.items.id). |
+| `site_code` | text | yes |  |  | Home depot reference. |
+| `asset_number` | text | yes |  |  | Asset number on the label. |
+| `kind_name` | text | yes |  |  | Kind of item. |
+| `serial_number` | text | yes |  |  | Maker's serial number. |
+| `make` | text | yes |  |  | Maker. |
+| `model` | text | yes |  |  | Model. |
+| `purchase_date` | date | yes |  |  | Date bought. |
+| `cost_pence` | bigint | yes |  |  | Purchase cost in pence. |
+| `ownership` | text | yes |  |  | owned or hired_in. |
+| `hire_company` | text | yes |  |  | Company hired from. |
+| `off_hire_date` | date | yes |  |  | Date due back to the hire company. |
+| `location_code` | text | yes |  |  | Code of the item's current location. |
+| `status` | text | yes |  |  | available, out, quarantined, missing or retired. |
+| `kit_asset_number` | text | yes |  |  | Asset number of the kit the item is in, if any. |
+| `created_at` | timestamp with time zone | yes |  |  | When the item was registered (UTC). |
+
+## `reporting.kinds`
+
+Each kind with its inspection rules (one row per rule), for Power BI and Excel. _(view)_
+
+| Column | Type | Null | Default | References | Description |
+| --- | --- | --- | --- | --- | --- |
+| `kind_id` | uuid | yes |  |  | Kind id. |
+| `kind_name` | text | yes |  |  | Kind name. |
+| `active` | boolean | yes |  |  | False once deactivated. |
+| `rule_type` | text | yes |  |  | loler, puwer, pat, calibration, pre_use or other; empty if the kind has no rules. |
+| `rule_title` | text | yes |  |  | Rule name. |
+| `interval_value` | integer | yes |  |  | Days or months between occurrences. |
+| `interval_unit` | text | yes |  |  | days or months. |
+| `required` | boolean | yes |  |  | True if the customer treats the rule as required. |
+
 ## `reporting.locations`
 
 Every location with its site and parent codes, for Power BI and Excel. _(view)_

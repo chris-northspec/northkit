@@ -19,11 +19,16 @@ Fonts, icons and images: the mark, app icons (rounded and maskable), favicon and
 | @node-rs/argon2 | 2.2 | MIT | core | Argon2id password hashing (prebuilt native binary, no build step) |
 | pg-boss | 12.38 | MIT | worker | Job queue inside PostgreSQL (DB-01); OpenTelemetry switched off |
 | qrcode-generator | 2.0 | MIT | core | Draws QR codes on the server (two-factor set-up now; item and location labels from Sprint 2). No dependencies; nothing leaves the server |
+| pdfkit | 0.20.2 | MIT | core (web, worker) | Draws the QR label PDFs (S2-4): A4 sheets and single labels, with PDFKit's built-in Helvetica (no font file shipped). Pulls in fontkit, linebreak, png-js, fflate, @noble/hashes and @noble/ciphers, brotli, pako, restructure, dfa, tiny-inflate, unicode-properties, unicode-trie, clone, base64-js (all MIT). Server side only; nothing is fetched |
+| jpeg-js | 0.4.4 | BSD-3-Clause | core | Decodes and encodes JPEGs for item-photo thumbnails (S2-3), in pure JavaScript. Also used by ClearRate |
+| pngjs | 7.0.0 | MIT | core | Decodes PNGs for thumbnails and writes the demo's placeholder photos. Also used by ClearRate |
+| read-excel-file | 9.3.17 | MIT | core | Reads .xlsx imports (S2-5): each cell's stored value, never calculating a formula, never running a macro; numbers read as exact text. Brings fflate, saxen, worker-f, unzipper-esm (all MIT) and graceful-fs (pinned, below). As ClearRate |
+| write-excel-file | 4.1.1 | MIT | core | Writes the Excel import template. As ClearRate |
 | tsx | 4.23 | MIT | worker, migrate | Runs the worker and the migration and CLI tools from TypeScript source in the `tools` Docker image |
 
 The licence module (`packages/licence`) uses only Node's built-in `crypto` (Ed25519): no licensing library.
 
-Not carried over from NorthKeep yet, and added back with the sprint that needs them (each recorded here when it is): nodemailer (MIT-0, email reminders, Sprint 4), pdfkit (MIT, label sheets and reports, Sprints 2 and 5), the files and xlsx helpers (spreadsheet import and export, Sprints 2 and 5).
+Added in Sprint 2: pdfkit, jpeg-js, pngjs, read-excel-file and write-excel-file (above). Not carried over from NorthKeep yet, and added back with the sprint that needs it: nodemailer (MIT-0, email reminders, Sprint 4) and the spreadsheet report writers (Sprint 5).
 
 ## Development and CI only (not shipped)
 
@@ -40,7 +45,15 @@ Not carried over from NorthKeep yet, and added back with the sprint that needs t
 | vitest | 5.1 | MIT | Unit and integration tests on real PostgreSQL |
 | @playwright/test | 1.65 | Apache-2.0 | Browser tests at 1280 wide and 390 × 844 |
 | @axe-core/playwright, axe-core | 4.11 | MPL-2.0 (build and test tools only, unmodified) | WCAG 2.2 AA checks in the browser tests. Allowed by the MPL-2.0 condition: never shipped, never modified |
-| jsqr | 1.4 | Apache-2.0 | Independent QR decoder, used only in tests to prove the QR codes we draw read back correctly |
+| jsqr | 1.4 | Apache-2.0 | Independent QR decoder, used only in tests to prove the QR codes we draw read back correctly, including from the printed label PDFs |
+| pdfjs-dist | 6.5 | Apache-2.0 | Independent PDF reader in the label tests: reads back each page's text, so what a PDF viewer shows is checked, not what our code meant to write |
+| @types/pdfkit, @types/pngjs | | MIT | Type definitions |
+
+## Pinned, with the reason
+
+| Package | Pin | Why |
+| --- | --- | --- |
+| graceful-fs | 4.2.11 (ISC), via `overrides` in `pnpm-workspace.yaml` | 4.2.12 and later moved to BlueOak-1.0.0, which our rules allow for build tools only, and it ships here (read-excel-file → unzipper-esm). 4.2.11 is the same code under ISC. The same pin as ClearRate (its C17, agreed by Chris 15 Nov 2026): recheck on every upgrade of read-excel-file; `pnpm licences:check` fails if a newer graceful-fs slips in. **K25: Chris to approve for NorthKit** |
 
 ## Not installed on purpose
 
