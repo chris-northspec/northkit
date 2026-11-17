@@ -300,7 +300,7 @@ export async function getItem(db: Db, actor: ActorContext, id: string): Promise<
       .orderBy('created_at')
       .execute();
     return {
-      item: item as Item,
+      item,
       kindName,
       kindActive,
       siteCode,

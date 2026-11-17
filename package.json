@@ -27,7 +27,9 @@
     "admin:reset-mfa": "pnpm --filter @northkit/core reset-mfa",
     "licence:install": "pnpm --filter @northkit/core licence-install",
     "licences:check": "node scripts/check-licences.mjs",
-    "check:ignored-source": "node scripts/check-ignored-source.mjs"
+    "check:ignored-source": "node scripts/check-ignored-source.mjs",
+    "demo": "node scripts/demo.mjs",
+    "demo:docker": "node scripts/demo.mjs --docker"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

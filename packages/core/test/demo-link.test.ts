@@ -7,7 +7,7 @@ import { createPool } from '@northkit/db';
 import { createFreshDatabase, dropTestDatabase } from '@northkit/db/migrate';
 import { verifyPassword } from '../src/auth/password';
 import { clientAddress, isLoopback } from '../src/net/client-address';
-import { demoRefusal, demoWarning } from '../src/net/demo';
+import { demoDatabaseOk, demoRefusal, demoWarning } from '../src/net/demo';
 
 // The demo link (docs/demo-link.md): a Cloudflare Tunnel on Chris's PC connects from
 // loopback and names the visitor in Cf-Connecting-Ip; the shared demo Administrator.
@@ -149,5 +149,48 @@ describe('pnpm demo:user', () => {
     } finally {
       await pool.end();
     }
+  });
+});
+
+describe('the Docker demo profile (K19)', () => {
+  const origin = 'https://northkit-demo.example';
+
+  it('is the only production-mode server allowed to run with a demo origin, and only on a demo database', () => {
+    const was = { flag: process.env.NORTHKIT_DEMO_SIDECAR, db: process.env.NORTHKIT_DB_NAME };
+    try {
+      // A normal production server still refuses.
+      delete process.env.NORTHKIT_DEMO_SIDECAR;
+      process.env.NORTHKIT_DB_NAME = 'northkit_demo_test';
+      expect(demoRefusal(origin, 'production')).toMatch(/will not start/);
+      // The sidecar flag with a demo database is allowed.
+      process.env.NORTHKIT_DEMO_SIDECAR = '1';
+      expect(demoRefusal(origin, 'production')).toBeNull();
+      // The flag with a customer's database name is not: it still refuses.
+      process.env.NORTHKIT_DB_NAME = 'northkit';
+      expect(demoRefusal(origin, 'production')).toMatch(/will not start/);
+      // The flag alone, on any other value, is not the sidecar.
+      process.env.NORTHKIT_DB_NAME = 'northkit_demo_test';
+      process.env.NORTHKIT_DEMO_SIDECAR = 'yes';
+      expect(demoRefusal(origin, 'production')).toMatch(/will not start/);
+    } finally {
+      if (was.flag === undefined) delete process.env.NORTHKIT_DEMO_SIDECAR;
+      else process.env.NORTHKIT_DEMO_SIDECAR = was.flag;
+      if (was.db === undefined) delete process.env.NORTHKIT_DB_NAME;
+      else process.env.NORTHKIT_DB_NAME = was.db;
+    }
+  });
+
+  it('accepts only demo and development database names', () => {
+    for (const ok of ['northkit_demo_test', 'northkit_dev', 'northkit_my_demo'])
+      expect(demoDatabaseOk(ok), ok).toBe(true);
+    for (const bad of ['northkit', 'northkit_prod', 'demo', '', undefined, 'northkit_demo; drop'])
+      expect(demoDatabaseOk(bad), String(bad)).toBe(false);
+  });
+
+  it('keeps trusting only loopback: a visit from Docker’s gateway is never believed', () => {
+    const tunnel = { trustLoopback: true };
+    const forged = { forwardedFor: '198.51.100.9', connectingIp: '203.0.113.7' };
+    expect(clientAddress({ peer: '172.18.0.1', ...forged }, [], tunnel)).toBe('172.18.0.1');
+    expect(clientAddress({ peer: '127.0.0.1', ...forged }, [], tunnel)).toBe('203.0.113.7');
   });
 });

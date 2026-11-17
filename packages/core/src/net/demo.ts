@@ -9,6 +9,14 @@ import { optionalEnv } from '@northkit/db';
 // works under the development server (`pnpm dev`) only: the production build and the
 // Docker image refuse to start with it set (demoRefusal, src/instrumentation.ts and
 // server/peer-address.mjs), and the development server warns at start-up (demoWarning).
+//
+// One exception (K19, Sprint 2): the Docker demo profile (`docker compose --profile demo`).
+// Inside that container a visit arrives from Docker's gateway, never from loopback, so the
+// profile runs a small proxy in the SAME network namespace as the app: the proxy connects
+// to the app over loopback, and only the proxy's port is published, on 127.0.0.1 of this
+// machine. The app is then told so with NORTHKIT_DEMO_SIDECAR=1, and only a database
+// whose name says demo or development is accepted (demoDatabaseOk). A normal install never
+// sets either, and still refuses to start with a demo origin.
 
 /** The addresses trusted to name the visitor while the demo link is on. */
 export const DEMO_TRUSTED_ADDRESSES = ['127.0.0.1', '::1'] as const;
@@ -31,9 +39,22 @@ function parse(value: string | undefined): DemoOrigin | null {
   }
 }
 
-/** The demo address, or null when it isn't set, or when this is a production server. */
+/** Demo and development database names only (the same rule as `pnpm demo:user`). */
+export function demoDatabaseOk(name: string | undefined): boolean {
+  return !!name && /^northkit_[a-z0-9_]*(demo|dev)[a-z0-9_]*$/.test(name);
+}
+
+/** True inside the Docker demo profile: the sidecar proxy is in front, and the database is a demo one. */
+export function demoSidecar(
+  flag: string | undefined = optionalEnv('NORTHKIT_DEMO_SIDECAR'),
+  database: string | undefined = optionalEnv('NORTHKIT_DB_NAME'),
+): boolean {
+  return flag === '1' && demoDatabaseOk(database);
+}
+
+/** The demo address, or null when it isn't set, or when this is a production server (other than the demo profile's). */
 export function demoOrigin(): DemoOrigin | null {
-  if (process.env.NODE_ENV === 'production') return null;
+  if (process.env.NODE_ENV === 'production' && !demoSidecar()) return null;
   return parse(optionalEnv('NORTHKIT_DEMO_ORIGIN'));
 }
 
@@ -53,7 +74,7 @@ export function demoRefusal(
   value: string | undefined = optionalEnv('NORTHKIT_DEMO_ORIGIN'),
   nodeEnv: string | undefined = process.env.NODE_ENV,
 ): string | null {
-  if (!value || nodeEnv === 'development') return null;
+  if (!value || nodeEnv === 'development' || demoSidecar()) return null;
   return (
     'NorthKit will not start: NORTHKIT_DEMO_ORIGIN is set, and the demo link only works ' +
     'under the development server (`pnpm dev`, docs/demo-link.md). It makes the app trust ' +

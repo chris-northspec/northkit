@@ -775,7 +775,7 @@ export async function getItemImport(
 /** The problems as CSV, for fixing the file (formula-safe). */
 export function importProblemsCsv(report: ImportReport): string {
   const safe = (v: string) => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
-  return `﻿${toCsv([
+  return `Feff${toCsv([
     ['line', 'column', 'problem'],
     ...report.fileProblems.map((p) => ['', '', safe(p)]),
     ...report.problems.map((p) => [p.line, p.column, safe(p.message)]),

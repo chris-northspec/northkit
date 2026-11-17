@@ -47,6 +47,14 @@ export interface DemoItem {
   siteCode: string;
   /** Code of the location the item is stored in or on. */
   locationCode: string;
+  /** True for a kit set (a harness set, a drill set) that holds other items. */
+  isKit: boolean;
+  /** Tag of the kit this item is part of, if any. */
+  kitTag: string | null;
+  /** Set for the few retired items. */
+  retiredReason: string | null;
+  /** True if the demo gives the item a placeholder photo. */
+  photo: boolean;
 }
 
 export interface DemoUser {
@@ -337,11 +345,54 @@ export function buildDemoItems(): DemoItem[] {
           ownership: spec.kind === 'plant' && rnd() < 0.25 ? 'hired_in' : 'owned',
           siteCode: site.code,
           locationCode: homeLocation(spec.kind, site.code, rnd),
+          isKit: false,
+          kitTag: null,
+          retiredReason: null,
+          photo: false,
         });
       }
     }
   }
+  shapeDemoCompany(items);
   return items;
+}
+
+const RETIRED_REASONS = [
+  'Damaged beyond repair',
+  'Sold on',
+  'Failed examination and scrapped',
+  'Lost and written off',
+];
+
+/**
+ * Kit sets, retired items and photos, decided after the items exist so the numbers stay
+ * fixed: per depot, three harness sets of two items and three drill sets of three, which
+ * is 18 kit sets across the three depots; four retired ladders and plant items; and a
+ * placeholder photo on the first dozen ladders and plant items.
+ */
+function shapeDemoCompany(items: DemoItem[]): void {
+  for (const site of DEMO_SITES) {
+    const here = items.filter((i) => i.siteCode === site.code);
+    const of = (kind: DemoItemKind) => here.filter((i) => i.kind === kind);
+    const makeKits = (pool: DemoItem[], kits: number, perKit: number, name: string) => {
+      for (let k = 0; k < kits; k++) {
+        const kit = pool[k]!;
+        kit.isKit = true;
+        kit.name = name;
+        kit.model = 'SET';
+        for (let p = 0; p < perKit; p++) {
+          const part = pool[kits + k * perKit + p]!;
+          part.kitTag = kit.tag;
+          part.locationCode = kit.locationCode;
+        }
+      }
+    };
+    makeKits(of('harness'), 3, 2, 'Harness set');
+    makeKits(of('power_tool'), 3, 3, 'Drill set');
+    const outdoor = [...of('ladder'), ...of('plant')];
+    outdoor.slice(0, 12).forEach((i) => (i.photo = true));
+    outdoor.slice(-4).forEach((i, n) => (i.retiredReason = RETIRED_REASONS[n]!));
+  }
 }
 
 /** Returns every problem found in the demo company; empty means it is consistent. */
@@ -351,6 +402,11 @@ export function checkDemoCompany(items: readonly DemoItem[] = buildDemoItems()):
   const siteCodes = new Set(DEMO_SITES.map((s) => s.code));
   const tags = new Set<string>();
   const serials = new Set<string>();
+  const byTag = new Map(items.map((i) => [i.tag, i]));
+  const kits = items.filter((i) => i.isKit).length;
+  if (kits < 15 || kits > 20) problems.push(`${kits} kit sets: expected 15 to 20`);
+  if (items.filter((i) => i.retiredReason).length < 3) problems.push('too few retired items');
+  if (!items.some((i) => i.ownership === 'hired_in')) problems.push('no hired-in items');
   for (const l of DEMO_LOCATIONS)
     if (!siteCodes.has(l.siteCode))
       problems.push(`location ${l.code}: unknown depot ${l.siteCode}`);
@@ -359,6 +415,12 @@ export function checkDemoCompany(items: readonly DemoItem[] = buildDemoItems()):
     tags.add(i.tag);
     if (serials.has(i.serial)) problems.push(`duplicate serial ${i.serial}`);
     serials.add(i.serial);
+    if (i.kitTag) {
+      const kit = byTag.get(i.kitTag);
+      if (!kit?.isKit) problems.push(`${i.tag}: ${i.kitTag} is not a kit`);
+      else if (kit.siteCode !== i.siteCode) problems.push(`${i.tag}: kit is at another depot`);
+      if (i.retiredReason) problems.push(`${i.tag}: a retired item can't be in a kit`);
+    }
     if (!locations.has(i.locationCode))
       problems.push(`${i.tag}: unknown location ${i.locationCode}`);
     else if (!i.locationCode.startsWith(`${i.siteCode}-`))

@@ -16,6 +16,10 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS tools
 COPY . .
 ENV NODE_ENV=production
+# The files volume mounts here for the worker too (it writes photo thumbnails and reads import
+# files). Owned by the app user so a fresh named volume is writable: Docker copies this
+# ownership into an empty volume (the bug ClearRate found, #85).
+RUN mkdir -p /data/files && chown node:node /data/files
 USER node
 CMD ["pnpm", "--filter", "@northkit/worker", "start"]
 

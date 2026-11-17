@@ -1,5 +1,6 @@
 'use client';
 
+import { Illustration } from '@/components/illustration';
 export default function ErrorPage({
   error,
   reset,
@@ -10,6 +11,7 @@ export default function ErrorPage({
   return (
     <main className="auth-page">
       <div className="auth-card stack">
+        <Illustration name="error" className="empty-picture" width={240} height={160} />
         <h1>Something went wrong</h1>
         <p>The page couldn’t load. Try again; if it keeps happening, tell your administrator.</p>
         {error.digest ? (

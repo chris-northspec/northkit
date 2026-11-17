@@ -100,7 +100,7 @@ export interface LabelOptions {
 }
 
 /** PDFKit's built-in fonts are Latin-1: anything else would print as a wrong letter. */
-const latin = (text: string) => text.replace(/[^\x20-\x7e -ÿ]/g, '?');
+const latin = (text: string) => text.replace(/[^\x20-\x7e00a0-ÿ]/g, '?');
 
 function drawLabel(
   doc: PDFKit.PDFDocument,
