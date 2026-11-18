@@ -1,17 +1,26 @@
 import { connectionSettings, createDb, createPool } from '@northkit/db';
-import { deleteOldSessions, rollAuditPartitions } from '@northkit/core';
+import {
+  deleteOldSessions,
+  makePendingThumbnails,
+  rollAuditPartitions,
+  runItemImports,
+} from '@northkit/core';
 import { PgBoss } from 'pg-boss';
 import { log } from './log';
 
 // Scheduled jobs (copied from NorthKeep main, 944121d). The queue lives in PostgreSQL
 // (schema pgboss), so there is nothing else to install. Times are UTC. Later sprints add
-// their jobs here: inspection and certificate reminders, overdue returns.
+// their jobs here: overdue returns, inspection and certificate reminders.
 const pool = createPool('app', { max: 3 });
 const db = createDb(pool);
 
 const JOBS = [
   { name: 'audit-roll-partitions', cron: '15 1 * * *', run: () => rollAuditPartitions(db) },
   { name: 'sessions-delete-old', cron: '30 1 * * *', run: () => deleteOldSessions(db) },
+  // S2-3: thumbnails for item photos, made here so uploads stay quick.
+  { name: 'photo-thumbnails', cron: '* * * * *', run: () => makePendingThumbnails(db) },
+  // S2-5: spreadsheet imports of items: checks the queued ones, stores the ones asked for.
+  { name: 'item-imports', cron: '* * * * *', run: () => runItemImports(db) },
 ] as const;
 
 const boss = new PgBoss({

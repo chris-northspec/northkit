@@ -15,6 +15,17 @@ const reminderDays = z
   .transform((days) => [...days].sort((a, b) => b - a));
 
 export const SETTING_DEFINITIONS = {
+  'items.asset_number_prefix': {
+    label: 'Prefix for generated asset numbers',
+    schema: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(
+        /^[A-Z][A-Z0-9]{0,7}$/,
+        'Use up to 8 capital letters or digits, starting with a letter.',
+      ),
+  },
   'reminders.days_before_due': {
     label: 'Reminder days before something falls due',
     schema: reminderDays,

@@ -29,14 +29,14 @@ const nextConfig = (phase: string): NextConfig => {
     output: 'standalone',
     outputFileTracingRoot: path.join(import.meta.dirname, '../../'),
     transpilePackages: ['@northkit/core', '@northkit/db', '@northkit/licence'],
-    serverExternalPackages: ['pg', '@node-rs/argon2'],
+    serverExternalPackages: ['pg', '@node-rs/argon2', 'pdfkit'],
     poweredByHeader: false,
     // sharp (LGPL libvips) is excluded from the install, so the optimiser can't run.
     images: { unoptimized: true },
-    // Spreadsheet imports and photos (Sprint 2 onwards) post to server actions.
+    // Spreadsheet imports (5 MB) and up to ten item photos (10 MB each) post to server actions.
     experimental: {
       serverActions: {
-        bodySizeLimit: '16mb',
+        bodySizeLimit: '110mb',
         // Only matters if a proxy in front rewrites the Host header; the same origin is
         // always allowed.
         ...(demoHost ? { allowedOrigins: [demoHost] } : {}),

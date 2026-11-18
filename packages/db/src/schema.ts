@@ -143,7 +143,97 @@ export interface AuditEventsTable {
   ip_address: string | null;
 }
 
+export const RULE_TYPES = ['loler', 'puwer', 'pat', 'calibration', 'pre_use', 'other'] as const;
+export type RuleType = (typeof RULE_TYPES)[number];
+export const ITEM_STATUSES = ['available', 'out', 'quarantined', 'missing', 'retired'] as const;
+export type ItemStatus = (typeof ITEM_STATUSES)[number];
+
+export interface KindsTable extends StandardColumns {
+  name: string;
+  description: Defaulted<string | null>;
+  asset_prefix: Defaulted<string | null>;
+  active: Defaulted<boolean>;
+}
+
+export interface KindRulesTable extends StandardColumns {
+  kind_id: string;
+  rule_type: RuleType;
+  title: string;
+  interval_value: number;
+  interval_unit: 'days' | 'months';
+  required: Defaulted<boolean>;
+  note: Defaulted<string | null>;
+  sort_order: Defaulted<number>;
+}
+
+export interface AssetCountersTable {
+  id: Generated<string>;
+  prefix: string;
+  last_number: Defaulted<number>;
+}
+
+export interface ItemsTable extends StandardColumns {
+  site_id: string;
+  kind_id: string;
+  asset_number: string;
+  serial_number: Defaulted<string | null>;
+  make: Defaulted<string | null>;
+  model: Defaulted<string | null>;
+  description: Defaulted<string | null>;
+  purchase_date: Defaulted<string | null>;
+  /** bigint: read as a number by the pool; whole pence. */
+  cost_pence: Defaulted<number | null>;
+  ownership: Defaulted<'owned' | 'hired_in'>;
+  hire_company: Defaulted<string | null>;
+  hire_reference: Defaulted<string | null>;
+  off_hire_date: Defaulted<string | null>;
+  location_id: Defaulted<string | null>;
+  status: Defaulted<ItemStatus>;
+  retired_at: Defaulted<Date | null>;
+  retired_reason: Defaulted<string | null>;
+  is_kit: Defaulted<boolean>;
+  parent_id: Defaulted<string | null>;
+  label_version: Defaulted<number>;
+  attributes: ColumnType<Record<string, unknown>, string | undefined, string>;
+  notes: Defaulted<string | null>;
+}
+
+export interface ItemPhotosTable extends StandardColumns {
+  site_id: string;
+  item_id: string;
+  content_type: 'image/jpeg' | 'image/png' | 'image/webp';
+  byte_size: number;
+  width: number;
+  height: number;
+  sha256: string;
+  storage_key: string;
+  thumb_key: Defaulted<string | null>;
+  thumb_failed: Defaulted<boolean>;
+  sort_order: Defaulted<number>;
+}
+
+export type ImportStatus =
+  'queued' | 'checking' | 'problems' | 'ready' | 'loading' | 'loaded' | 'failed';
+
+export interface ImportsTable extends StandardColumns {
+  file_name: string;
+  file_format: 'csv' | 'xlsx';
+  stored_name: string;
+  byte_size: number;
+  status: Defaulted<ImportStatus>;
+  row_count: Defaulted<number>;
+  items_loaded: Defaulted<number>;
+  report: ColumnType<Record<string, unknown>, string | undefined, string>;
+  error: Defaulted<string | null>;
+}
+
 export interface Database {
+  'register.kinds': KindsTable;
+  'register.kind_rules': KindRulesTable;
+  'register.asset_counters': AssetCountersTable;
+  'register.items': ItemsTable;
+  'register.item_photos': ItemPhotosTable;
+  'register.imports': ImportsTable;
   'core.users': UsersTable;
   'core.organisations': OrganisationsTable;
   'core.sites': SitesTable;
@@ -164,6 +254,11 @@ export type Site = Selectable<SitesTable>;
 export type Location = Selectable<LocationsTable>;
 export type NewLocation = Insertable<LocationsTable>;
 export type Setting = Selectable<SettingsTable>;
+export type Kind = Selectable<KindsTable>;
+export type KindRule = Selectable<KindRulesTable>;
+export type Item = Selectable<ItemsTable>;
+export type ItemPhoto = Selectable<ItemPhotosTable>;
+export type ItemImport = Selectable<ImportsTable>;
 export type Role = Selectable<RolesTable>;
 export type Licence = Selectable<LicencesTable>;
 export type AuditEvent = Selectable<AuditEventsTable>;

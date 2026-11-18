@@ -141,3 +141,21 @@ Numbered for the QA sheet. "Sprint" is when each first passes.
 | A18 | A transfer between depots moves the item and is visible only to people at the depots involved. | 3 |
 | A19 | No screen, email, report or label says NorthKit certifies or approves an examination (a wording test over the app's text). | 2 onwards |
 | A20 | Overdue returns appear on the dashboard and in a reminder. | 3 |
+
+## 9. Sprint 2 acceptance tests and where each is tested
+
+New tests added in Sprint 2 are A21 to A27; the ones from section 8 that Sprint 2 touches are mapped too. "unit" is Vitest on a real PostgreSQL 16; "browser" is Playwright at 1280 and 390 × 844 with axe.
+
+| # | Test | Sprint | Where |
+| --- | --- | --- | --- |
+| A1 | A user at depot A sees nothing of depot B (now including items, photos, history, exports) | 1, 2 | `packages/db/test/site-isolation.test.ts` (items, photos), `packages/core/test/items.test.ts` (services), `packages/core/test/photos.test.ts`, `apps/web/e2e/access.spec.ts` |
+| A15 | A spreadsheet import with one bad row imports nothing and says which row and column; 2,000 rows succeed; duplicates are caught in the file and against the register | 2 | `packages/core/test/item-import.test.ts`, `apps/web/e2e/items.spec.ts` (errors, then a clean import) |
+| A19 | No screen, email, report or label says NorthKit certifies or approves an examination | 2 | `apps/web/test/wording.test.ts` (scans the app's text), and the notice on every rules screen |
+| A21 | Photos: a wrong type is refused, an oversize photo is refused, EXIF and GPS are removed from what is stored, at most 10 per item, another depot's photo is a 404 | 2 | `packages/core/test/media.test.ts`, `packages/core/test/photos.test.ts`, `packages/db/test/register.test.ts` (10 and 10 MB limits), `apps/web/e2e/items.spec.ts` (phone upload) |
+| A22 | A label's QR holds an opaque signed token, never the item id; a signed-in scan opens the item; a scan with no login shows only the kind and asset number and "Report a fault: coming soon"; a forged, shortened or replaced code gets the same page; the QR decodes from the printed PDF | 2 | `packages/core/test/labels.test.ts` (decodes the QR from the PDF at all three layouts), `apps/web/e2e/items.spec.ts` |
+| A23 | Kinds carry editable inspection rules; only a Kit Manager or Administrator can change them; a kind in use can't be deleted (the database refuses) and a deactivated kind takes no new items | 2 | `packages/core/test/items.test.ts`, `packages/db/test/register.test.ts` |
+| A24 | The database refuses what screens must not allow: a status change that isn't permitted, a retired item without a reason, hire details on an owned item, an item in another depot's location, a kit inside a kit, a duplicate asset number | 2 | `packages/db/test/register.test.ts` |
+| A25 | The item list searches, filters (kind, depot, status, owned or hired in, kits) and pages; its CSV is formula-safe and holds every match, not one page | 2 | `packages/core/test/items.test.ts`, `apps/web/e2e/items.spec.ts` |
+| A26 | `pnpm db:seed-demo` stores the whole fictional company (about 600 items, 15 to 20 kit sets) and running it twice gives the same result | 2 | `packages/core/test/demo-company.test.ts` |
+| A27 | Every colour goes through the design tokens: no hard-coded hex or colour function outside `tokens.css`, and text on an accent fill uses `--colour-on-accent` | 2 | `apps/web/test/tokens.test.ts` |
+| A9 | The main screens pass axe at 1280 and 390 × 844 with no sideways scrolling (now including items, kinds, import, the item page and the scan page) | 1 onwards | `apps/web/e2e/shell.spec.ts`, `apps/web/e2e/items.spec.ts` |

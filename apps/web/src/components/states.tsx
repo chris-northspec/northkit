@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { Illustration, type IllustrationName } from './illustration';
 
 // The four screen states (studio standard 02): loading, empty, error and populated.
 // Loading is a skeleton shaped like the content; empty says why and what to do;
@@ -9,13 +10,19 @@ export function EmptyState({
   title,
   children,
   action,
+  picture,
 }: {
   title: string;
   children?: ReactNode;
   action?: { href: string; label: string } | null;
+  /** A picture from the pack for the main lists (empty register, no results, all clear). */
+  picture?: IllustrationName;
 }) {
   return (
     <div className="empty" role="status">
+      {picture ? (
+        <Illustration name={picture} className="empty-picture" width={240} height={160} />
+      ) : null}
       <h2>{title}</h2>
       {children ? <div className="muted">{children}</div> : null}
       {action ? (

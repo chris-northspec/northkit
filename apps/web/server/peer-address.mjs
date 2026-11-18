@@ -12,7 +12,13 @@ import http from 'node:http';
 
 export const PEER_HEADER = 'x-northkit-peer';
 
-if (process.env.NODE_ENV === 'production' && process.env.NORTHKIT_DEMO_ORIGIN?.trim()) {
+// The Docker demo profile is the one exception: its proxy shares the app's network
+// namespace, and it only runs on a demo or development database (docs/demo-link.md).
+const sidecar =
+  process.env.NORTHKIT_DEMO_SIDECAR === '1' &&
+  /^northkit_[a-z0-9_]*(demo|dev)[a-z0-9_]*$/.test(process.env.NORTHKIT_DB_NAME ?? '');
+
+if (process.env.NODE_ENV === 'production' && process.env.NORTHKIT_DEMO_ORIGIN?.trim() && !sidecar) {
   process.stderr.write(
     'NorthKit will not start: NORTHKIT_DEMO_ORIGIN is set, and the demo link only works ' +
       'under the development server (`pnpm dev`, docs/demo-link.md). It makes the app trust ' +

@@ -69,7 +69,7 @@ describe('migration runner (S1-2, DB-11)', () => {
 
 describe('0001_foundation (DB-01 to DB-04)', () => {
   it('creates one schema per module (DB-02)', async () => {
-    const expected = ['audit', 'core', 'reporting'];
+    const expected = ['audit', 'core', 'register', 'reporting'];
     const { rows } = await client.query<{ nspname: string }>(
       'SELECT nspname FROM pg_namespace WHERE nspname = ANY($1) ORDER BY nspname',
       [expected],
@@ -151,7 +151,7 @@ describe('0001_foundation (DB-01 to DB-04)', () => {
                WHERE a.attrelid = c.oid AND a.attname = 'id') AS id_type
         FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
        WHERE c.relkind IN ('r', 'p') AND NOT c.relispartition
-         AND n.nspname IN ('core', 'audit')`);
+         AND n.nspname IN ('core', 'register', 'audit')`);
     expect(rows.length).toBeGreaterThan(8);
     for (const row of rows) {
       expect(row.name, row.name).toMatch(/^[a-z]+\.[a-z_]+s$/);

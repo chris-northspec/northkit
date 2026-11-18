@@ -20,6 +20,25 @@ x-app-env: &app-env
   NORTHKIT_FILES_DIR: /data/files
   TZ: UTC
 
+x-demo-env: &demo-env
+  NORTHKIT_DB_HOST: db-demo
+  NORTHKIT_DB_PORT: '5432'
+  NORTHKIT_DB_NAME: ${NORTHKIT_DB_NAME:-northkit_demo_test}
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: ${DEMO_POSTGRES_PASSWORD:-}
+  NORTHKIT_APP_DB_PASSWORD: ${DEMO_APP_DB_PASSWORD:-}
+  NORTHKIT_SECRET_KEY: ${DEMO_SECRET_KEY:-}
+  NORTHKIT_COOKIE_SECURE: ${NORTHKIT_COOKIE_SECURE:-true}
+  NORTHKIT_PUBLIC_URL: ${NORTHKIT_PUBLIC_URL:-}
+  NORTHKIT_DEMO_ORIGIN: ${NORTHKIT_DEMO_ORIGIN:-}
+  # The one thing that lets the production-mode web container run with a demo origin: the
+  # proxy in its network namespace is in front, and the database name must say demo or dev.
+  NORTHKIT_DEMO_SIDECAR: '1'
+  DEMO_SHARED_PASSWORD: ${DEMO_SHARED_PASSWORD:-}
+  SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+  NORTHKIT_FILES_DIR: /data/files
+  TZ: UTC
+
 services:
   db:
     image: postgres:16
@@ -79,9 +98,93 @@ services:
     command: ['pnpm', '--filter', '@northkit/worker', 'start']
     restart: unless-stopped
     environment: *app-env
+    volumes:
+      # The same files volume as the web service: the worker makes thumbnails and runs imports.
+      - files:/data/files
     depends_on:
       migrate: { condition: service_completed_successfully }
+
+  # ---------------------------------------------------------------- demo profile
+  # NorthSpec's own demo PC only (docs/demo-link.md): `docker compose --profile demo`, normally
+  # through `pnpm demo:docker`. Its own database and volumes, settings from deploy/.env.demo
+  # (the normal install's deploy/.env never needs a demo line, and the normal web service still
+  # refuses to start with a demo origin). The app trusts loopback to name the visitor, so the
+  # proxy shares its network namespace and is the only thing published, on 127.0.0.1.
+  db-demo:
+    profiles: [demo]
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DEMO_POSTGRES_PASSWORD:-}
+      POSTGRES_DB: postgres
+      TZ: UTC
+    volumes:
+      - pgdata-demo:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  demo-seed:
+    profiles: [demo]
+    build: { context: .., dockerfile: deploy/Dockerfile, target: tools }
+    command: ['sh', '-c', 'pnpm db:seed-demo && pnpm demo:user']
+    environment: *demo-env
+    volumes:
+      - files-demo:/data/files
+    depends_on:
+      db-demo: { condition: service_healthy }
+
+  web-demo:
+    profiles: [demo]
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    restart: unless-stopped
+    environment: *demo-env
+    volumes:
+      - files-demo:/data/files
+    ports:
+      # The proxy's port, published on this machine only.
+      - '127.0.0.1:${NORTHKIT_DEMO_PORT:-3030}:3030'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/manifest.webmanifest').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    depends_on:
+      db-demo: { condition: service_healthy }
+
+  demo-proxy:
+    profiles: [demo]
+    image: node:22-bookworm-slim
+    restart: unless-stopped
+    network_mode: 'service:web-demo'
+    command: ['node', '/demo-proxy.mjs']
+    volumes:
+      - ./demo-proxy.mjs:/demo-proxy.mjs:ro
+    depends_on:
+      web-demo: { condition: service_healthy }
+
+  worker-demo:
+    profiles: [demo]
+    build: { context: .., dockerfile: deploy/Dockerfile, target: tools }
+    command: ['pnpm', '--filter', '@northkit/worker', 'start']
+    restart: unless-stopped
+    environment: *demo-env
+    volumes:
+      - files-demo:/data/files
+    depends_on:
+      db-demo: { condition: service_healthy }
 
 volumes:
   pgdata:
   files:
+  pgdata-demo:
+  files-demo:

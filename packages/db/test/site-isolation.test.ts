@@ -18,11 +18,14 @@ import { adminPool, appPool, readonlyPool, tag } from './helpers';
 interface SiteRefs {
   siteId: string;
   locationId: string;
+  /** An item at the depot, for rows that point at one. */
+  itemId: string;
 }
 
 interface Shared {
   users: string[];
   roles: string[];
+  kindId: string;
 }
 
 interface Fixture {
@@ -69,6 +72,22 @@ const FIXTURES: Record<string, Fixture> = {
     touch: 'role_id = role_id',
     deletable: true,
   },
+  'register.items': {
+    insert: (s, sh, n) => [
+      'INSERT INTO register.items (site_id, kind_id, asset_number) VALUES ($1, $2::uuid, $3) RETURNING id',
+      [s.siteId, sh.kindId, `ISO${n}${t}`],
+    ],
+    touch: 'notes = notes',
+  },
+  'register.item_photos': {
+    insert: (s) => [
+      `INSERT INTO register.item_photos (site_id, item_id, content_type, byte_size, width, height, sha256, storage_key)
+       VALUES ($1, $2::uuid, 'image/jpeg', 100, 10, 10, repeat('a', 64), 'items/' || $2::text || '/' || public.uuid_v7() || '.jpg') RETURNING id`,
+      [s.siteId, s.itemId],
+    ],
+    touch: 'sort_order = sort_order',
+    deletable: true,
+  },
   'audit.audit_events': {
     insert: (s) => [
       `INSERT INTO audit.audit_events (action, entity_type, site_id)
@@ -82,7 +101,7 @@ const FIXTURES: Record<string, Fixture> = {
 let admin: pg.Pool;
 let app: pg.Pool;
 const t = tag();
-const shared: Shared = { users: [], roles: [] };
+const shared: Shared = { users: [], roles: [], kindId: '' };
 let siteA: SiteRefs;
 let siteB: SiteRefs;
 
@@ -99,7 +118,11 @@ async function siteRefs(code: string): Promise<SiteRefs> {
     `INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'store', 'Z1', 'Z1 store') RETURNING id`,
     [siteId],
   );
-  return { siteId, locationId: location.rows[0]!.id };
+  const item = await admin.query<{ id: string }>(
+    'INSERT INTO register.items (site_id, kind_id, asset_number) VALUES ($1, $2::uuid, $3) RETURNING id',
+    [siteId, shared.kindId, `BASE-${code}`],
+  );
+  return { siteId, locationId: location.rows[0]!.id, itemId: item.rows[0]!.id };
 }
 
 /** Runs `fn` as northkit_app with app.site_ids set, as the app does. */
@@ -139,6 +162,9 @@ beforeAll(async () => {
       ).rows[0]!.id,
     );
   }
+  shared.kindId = (
+    await admin.query<{ id: string }>('SELECT id FROM register.kinds ORDER BY name LIMIT 1')
+  ).rows[0]!.id;
   siteA = await siteRefs(`A${t}`);
   siteB = await siteRefs(`B${t}`);
   for (const [table, fixture] of Object.entries(FIXTURES)) {
@@ -293,7 +319,7 @@ describe('composite keys (DB-06)', () => {
   it('refuses a location in site A with a parent in site B', async () => {
     await expect(
       admin.query(
-        `INSERT INTO core.locations (site_id, parent_id, kind, code, name) VALUES ($1, $2, 'store', 'XP', 'X')`,
+        `INSERT INTO core.locations (site_id, parent_id, kind, code, name) VALUES ($1, $2::uuid, 'store', 'XP', 'X')`,
         [siteA.siteId, siteB.locationId],
       ),
     ).rejects.toMatchObject({ code: '23503' });
@@ -301,7 +327,7 @@ describe('composite keys (DB-06)', () => {
 
   it('keeps a location path in step with its parent, and moves the subtree with it', async () => {
     const child = await admin.query<{ id: string; path: string }>(
-      `INSERT INTO core.locations (site_id, parent_id, kind, code, name) VALUES ($1, $2, 'store', 'ZC', 'Cage') RETURNING id, path::text`,
+      `INSERT INTO core.locations (site_id, parent_id, kind, code, name) VALUES ($1, $2::uuid, 'store', 'ZC', 'Cage') RETURNING id, path::text`,
       [siteA.siteId, siteA.locationId],
     );
     const parentPath = (

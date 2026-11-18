@@ -128,11 +128,11 @@ describe('audit log (S1-6)', () => {
       SELECT format('%s.%s', n.nspname, c.relname) AS name
         FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
        WHERE c.relkind IN ('r', 'p') AND NOT c.relispartition
-         AND n.nspname = 'core'
+         AND n.nspname IN ('core', 'register')
          AND NOT EXISTS (SELECT FROM pg_trigger t WHERE t.tgrelid = c.oid AND t.tgname = 'audit_changes')
        ORDER BY 1`);
-    // Sessions are covered by auth events.
-    expect(rows.map((r) => r.name)).toEqual(['core.sessions']);
+    // Sessions are covered by auth events; asset counters are bookkeeping (the number shows on the item).
+    expect(rows.map((r) => r.name)).toEqual(['core.sessions', 'register.asset_counters']);
   });
 
   it('audits every insert, change and delete on every table with updated_at, in any schema ', async () => {

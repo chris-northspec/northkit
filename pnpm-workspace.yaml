@@ -16,3 +16,10 @@ ignoredOptionalDependencies:
 auditConfig:
   ignoreGhsas:
     - GHSA-fc5q-39xc-vjpf
+
+# graceful-fs 4.2.12 and later moved to BlueOak-1.0.0, which we allow for build tools only,
+# and it ships here (read-excel-file -> unzipper-esm). 4.2.11 is the same code under ISC.
+# Same pin as ClearRate (its C17, agreed by Chris 15 Nov 2026). Recheck on every upgrade of
+# read-excel-file; `pnpm licences:check` fails if a newer graceful-fs slips in.
+overrides:
+  graceful-fs: 4.2.11

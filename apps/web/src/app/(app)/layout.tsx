@@ -27,6 +27,9 @@ const NAV: {
   {
     items: [
       { href: '/', label: 'Overview' },
+      { href: '/items', label: 'Items', needs: 'items.view' },
+      { href: '/kinds', label: 'Kinds', needs: 'items.view' },
+      { href: '/import', label: 'Import items', needs: 'imports.view' },
       { href: '/sites', label: 'Depots and locations', needs: 'overview.view' },
     ],
   },

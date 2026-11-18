@@ -23,6 +23,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.demo.example
 *.pem
 *.key
 /secrets/
@@ -37,6 +38,7 @@ node_modules/
 /deploy/backups/
 /pgdata/
 /deploy/pgdata/
+/.data/
 
 # Logs and OS files
 *.log

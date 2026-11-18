@@ -2,7 +2,7 @@ import type pg from 'pg';
 
 // Schemas documented in docs/data-dictionary. pgboss belongs to the job queue
 // library and is left out on purpose.
-export const DOCUMENTED_SCHEMAS = ['public', 'core', 'audit', 'reporting'] as const;
+export const DOCUMENTED_SCHEMAS = ['public', 'core', 'register', 'audit', 'reporting'] as const;
 
 interface ColumnInfo {
   table: string;

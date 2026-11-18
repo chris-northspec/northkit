@@ -1,5 +1,5 @@
 import { connectionSettings, createPool, optionalEnv } from '@northkit/db';
-import { hashPassword, passwordProblem } from '../auth/password';
+import { hashPassword, passwordProblem, verifyPassword } from '../auth/password';
 import { fail, say } from './output';
 
 // pnpm demo:user (docs/demo-link.md): the one sign-in Chris uses on every NorthSpec demo
@@ -9,7 +9,8 @@ import { fail, say } from './output';
 // fictional demo estate), never a customer's. The password is hashed with Argon2id as
 // every other password is, and is never printed. Two-factor stays as the Administrator
 // role requires: set it up on first sign-in. Re-running it with a new password changes it
-// and signs the demo user out everywhere.
+// and signs the demo user out everywhere. With --check (used by `pnpm demo`) a demo user
+// whose password already matches is left alone, so starting the demo signs nobody out.
 
 const EMAIL = 'demo@northspec.test';
 const NAME = 'NorthSpec demo';
@@ -29,6 +30,23 @@ if (problem) fail(`DEMO_SHARED_PASSWORD: ${problem}`);
 const pool = createPool('admin', { max: 1 });
 const client = await pool.connect();
 try {
+  if (process.argv.includes('--check')) {
+    const { rows } = await client.query<{ password_hash: string | null; archived_at: Date | null }>(
+      'SELECT password_hash, archived_at FROM core.users WHERE lower(email) = $1',
+      [EMAIL],
+    );
+    const current = rows[0];
+    if (
+      current?.password_hash &&
+      !current.archived_at &&
+      (await verifyPassword(current.password_hash, password))
+    ) {
+      say(`the Administrator ${EMAIL} on ${database} is already set up; left alone`);
+      client.release();
+      await pool.end();
+      process.exit(0);
+    }
+  }
   await client.query('BEGIN');
   const hash = await hashPassword(password);
   const { rows } = await client.query<{ id: string; created: boolean }>(
