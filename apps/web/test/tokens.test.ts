@@ -85,4 +85,40 @@ describe('colour tokens', () => {
     expect(missing).toEqual([]);
     expect(css).not.toMatch(/color:\s*(?:white|#fff)/i);
   });
+  // House style v2 (standard 13, section 7): a hard-coded radius or shadow is a bug, as a
+  // hard-coded colour is. Radii and shadows come from the tokens; the only literals allowed
+  // are 0, a circle (50%), inherit, and the 3 px severity edge on an attention card.
+  const styleFiles = all.filter((f) => f.rel.endsWith('.css') && f.rel !== 'styles/tokens.css');
+
+  it('has no hard-coded border radius outside tokens.css', () => {
+    const bad = styleFiles.flatMap((f) =>
+      [...f.text.matchAll(/border(?:-[a-z]+){0,2}-radius:\s*([^;]+);/g)]
+        .filter(([, value]) => {
+          const rest = value!
+            .replace(/var\(--radius-(?:sm|md|lg|xl|pill)\)/g, '')
+            .replace(/calc\([^)]*\)/g, '')
+            .replace(/(?<![\w.])(?:0|50%|inherit|initial)(?![\w.])/g, '')
+            .replace(/[\s/]/g, '');
+          return rest !== '';
+        })
+        .map(([line]) => `${f.rel}: ${line.trim()}`),
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it('has no hard-coded box shadow outside tokens.css', () => {
+    const bad = styleFiles.flatMap((f) =>
+      [...f.text.matchAll(/box-shadow:\s*([^;]+);/g)]
+        .filter(([, value]) => {
+          const rest = value!
+            .replace(/var\(--(?:shadow-[a-z0-9]+|ring)\)/g, '')
+            .replace(/inset (?:3px 0 0|0 3px 0) var\(--[a-z-]+\)/g, '')
+            .replace(/\bnone\b/g, '')
+            .replace(/[\s,]/g, '');
+          return rest !== '';
+        })
+        .map(([line]) => `${f.rel}: ${line.replace(/\s+/g, ' ').trim()}`),
+    );
+    expect(bad).toEqual([]);
+  });
 });

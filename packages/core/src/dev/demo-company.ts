@@ -283,7 +283,7 @@ const SPECS: KindSpec[] = [
 ];
 
 /** A small seeded random number generator, so every run makes the same company. */
-function random(seed: number): () => number {
+export function random(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
     s = (s + 0x6d2b79f5) >>> 0;

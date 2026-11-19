@@ -63,7 +63,7 @@ test('the item page leads on a phone, and replacing a label retires the old prin
   const heading = await page.getByRole('heading', { level: 1 }).boundingBox();
   // The item leads: its name and status come before any panel, and well inside the first screen
   // (the evaluation notice and the top bar sit above it on a phone).
-  const firstPanel = await page.locator('section.panel').first().boundingBox();
+  const firstPanel = await page.locator('section.card').first().boundingBox();
   expect(heading!.y).toBeLessThan(firstPanel!.y);
   expect(heading!.y).toBeLessThan(420);
   const oldCode = signItemCode(id, 1);
@@ -179,7 +179,7 @@ test('import: a file with errors stores nothing and lists every problem; the fix
   await page.getByRole('button', { name: 'Store 2 items' }).click();
   await expect(page.getByText('2 items stored.')).toBeVisible();
   await page.goto(`/items?q=Imp${tag}`);
-  await expect(page.getByText('2 items')).toBeVisible();
+  await expect(page.locator('#items-card .list-count')).toHaveText('2 items');
   await expect(page.getByRole('link', { name: `${tag}-1`, exact: true })).toBeVisible();
   await expectAccessible(page);
 });

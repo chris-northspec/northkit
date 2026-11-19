@@ -44,7 +44,7 @@ export default async function ScanPage({ params }: { params: Promise<{ code: str
 
   return (
     <main className="auth-page">
-      <div className="auth-card stack">
+      <div className="auth-card card-hero stack">
         <p className="auth-product">
           <ProductMark />
         </p>

@@ -14,6 +14,7 @@ import {
   type DemoItemKind,
 } from '../dev/demo-company';
 import { filesDir, writeStored } from '../files/storage';
+import { seedDemoHistory } from '../dev/demo-history';
 import { demoPhotoId, demoPhotoPng } from '../dev/demo-photos';
 import { makeThumbnail } from '../media/thumbnail';
 import { fail, say } from './output';
@@ -104,6 +105,9 @@ try {
     locationIds.set(r.code, r.id);
   await rm(path.join(filesDir(), 'items'), { recursive: true, force: true });
   const itemIds = new Map<string, string>();
+  // Kit that lives in a van is stored at the depot's store and then checked out to the van by
+  // the history below, so the register's position always comes from a movement.
+  const vanItems = new Map<string, string>();
   let photos = 0;
   // Kit sets first, so their parts can point at them.
   for (const i of [...items.filter((x) => x.isKit), ...items.filter((x) => !x.isKit)]) {
@@ -126,7 +130,11 @@ try {
         i.ownership === 'hired_in' ? 'Example Plant Hire Ltd (fictional)' : null,
         i.ownership === 'hired_in' ? `H-${i.tag.slice(-3)}` : null,
         i.ownership === 'hired_in' ? '2027-03-31' : null,
-        locationIds.get(i.locationCode),
+        locationIds.get(
+          DEMO_LOCATIONS.find((l) => l.code === i.locationCode)?.kind === 'van'
+            ? `${i.siteCode}-STORE`
+            : i.locationCode,
+        ),
         i.retiredReason ? 'retired' : 'available',
         i.retiredReason ? '2026-10-01T09:00:00Z' : null,
         i.retiredReason,
@@ -135,6 +143,12 @@ try {
       ],
     );
     itemIds.set(i.tag, rows[0]!.id);
+    if (
+      !i.kitTag &&
+      !i.retiredReason &&
+      DEMO_LOCATIONS.find((l) => l.code === i.locationCode)?.kind === 'van'
+    )
+      vanItems.set(i.tag, i.locationCode);
     if (i.photo) {
       const png = demoPhotoPng(
         i.tag,
@@ -161,6 +175,22 @@ try {
       photos += 1;
     }
   }
+
+  // Each depot's first van belongs to a person: "To my van" at check-out means this van.
+  for (const [van, email] of [
+    ['ASH-VAN1', 'demo.operative1@northkit.test'],
+    ['ASH-VAN2', 'demo.operative2@northkit.test'],
+    ['BRK-VAN1', 'demo.operative3@northkit.test'],
+    ['CLY-VAN1', 'demo.operative4@northkit.test'],
+  ] as const)
+    await pool.query(
+      'UPDATE core.locations SET assigned_user_id = (SELECT id FROM core.users WHERE email = $2) WHERE code = $1',
+      [van, email],
+    );
+  const history = await seedDemoHistory({ pool, items, itemIds, vanItems });
+  say(
+    `movement history: ${history.movements} planned movements, ${history.overdue} items overdue, ${history.missing} missing, ${history.inTransit} transfers in transit, ${history.stocktakes} stocktakes`,
+  );
 
   const vans = DEMO_LOCATIONS.filter((l) => l.kind === 'van').length;
   say(

@@ -6,6 +6,7 @@ import { db } from '@/lib/server/db';
 import { currentSession, homeFor, MFA_COOKIE } from '@/lib/server/session';
 import { Illustration } from '@/components/illustration';
 import { ProductMark } from '@/components/product-mark';
+import { Eyebrow } from '@/components/ui/primitives';
 import { SignInForm } from './sign-in-form';
 
 export const metadata: Metadata = { title: 'Sign in' };
@@ -24,10 +25,11 @@ export default async function LoginPage() {
         <Illustration name="auth-hero" className="illustration-hero" />
         <p className="auth-tagline">Know where it is. Know it’s safe.</p>
       </div>
-      <div className="auth-card">
+      <div className="auth-card card-hero">
         <p className="auth-product">
           <ProductMark />
         </p>
+        <Eyebrow tone="hero">Staff sign-in</Eyebrow>
         <h1>Sign in</h1>
         <SignInForm initialStep={pendingCode ? 'code' : 'password'} />
         <p className="muted small">Forgotten your password? Ask an administrator to reset it.</p>

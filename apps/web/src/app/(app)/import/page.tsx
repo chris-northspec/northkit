@@ -1,3 +1,5 @@
+import { FileSpreadsheet, Upload } from 'lucide-react';
+import { CardHead } from '@/components/ui/primitives';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { can, ITEM_IMPORT_COLUMNS, listItemImports, MAX_IMPORT_ROWS } from '@northkit/core';
@@ -44,8 +46,12 @@ export default async function ImportPage() {
         added. Formulas are never run.
       </p>
 
-      <section className="panel" aria-labelledby="template-heading">
-        <h2 id="template-heading">Start from the template</h2>
+      <section className="card" aria-labelledby="template-heading">
+        <CardHead
+          headingId="template-heading"
+          icon={FileSpreadsheet}
+          title="Start from the template"
+        />
         <p>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a file download, not a page */}
           <a className="button" href="/import/template?format=xlsx">
@@ -67,8 +73,8 @@ export default async function ImportPage() {
       </section>
 
       {canImport ? (
-        <section className="panel" aria-labelledby="upload-heading">
-          <h2 id="upload-heading">Upload a file</h2>
+        <section className="card" aria-labelledby="upload-heading">
+          <CardHead headingId="upload-heading" icon={Upload} title="Upload a file" />
           <ActionForm
             action={uploadImportAction}
             submitLabel="Check the file"
