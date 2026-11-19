@@ -29,4 +29,4 @@ Used while building or testing NorthKit. They are not part of the running produc
 
 ## Brand
 
-The NorthKit mark, app icons, favicon and sign-in picture in `apps/web/public/` are original placeholders made for NorthKit, owned by Chris Ramsden trading as NorthSpec, until BrandCentre chooses the real ones.
+The NorthKit mark and app icons in `apps/web/public/` are made from the BrandCentre mark (`northkit/logo`), owned by Chris Ramsden trading as NorthSpec. The sign-in picture and the other illustrations are original SVG drawn in the design tokens.

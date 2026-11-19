@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Brand release (branch `chore/brand-and-name`)
+- **Name (K3):** NorthKit confirmed as the product name (UK IPO and Companies House clear, 17 Nov 2026); "working name" removed from the README, CLAUDE.md, credits and docs. northkit.co.uk is not bought yet.
+- **Accent (K9):** Hi-Vis Yellow `#F2C200` with Ink text on it (never white) and Tag Brass for the accent as text, copied from BrandCentre `northkit/tokens/accent.css`. In dark, the accent tint is 20% so Tag Brass text keeps 4.5:1. App icon, favicons, PNG and maskable icons, manifest theme colour, the QR kit tag mark and the demo ladder photo band regenerated from BrandCentre.
+- **Tests:** `apps/web/test/contrast.test.ts` (WCAG AA for the accent, text and every status pair in light and dark, read from `tokens.css`) and `apps/web/e2e/themes.spec.ts` (axe in light and dark on eight screens at both sizes, button colours checked). The studio `contrast-check.js` also passes.
+- **Screens:** `docs/screens/house-style-check/` retaken for NorthKit. NorthSlot's signed-in screens are unchanged (not reachable from this machine; K30).
+- **Decision:** K31 brand release, Proposed (built), Chris to confirm.
+
 ### Sprint 2: items, kinds, labels, photos, import (branch `sprint-2/items`)
 - **Kinds and rules (S2-1):** eight starter kinds with editable inspection rules (type, interval, required, a note) taken from `docs/research/compliance-sources.md`; every screen says they are your own schedule settings, not legal advice. A kind in use can't be deleted (the database refuses); deactivate instead.
 - **Item register (S2-2):** items with kind, asset number (typed or generated per kind prefix), serial, make, model, purchase date and exact-pence cost, owned or hired in, home depot and location, status, notes. Kit sets one level deep. Status transitions, kits, hire details and retire reasons are enforced in the database. List with search, filters (kind, depot, status, owned or hired in, kits) and paging; CSV of the filtered list; history from the audit log; retire with a reason.
@@ -20,7 +27,7 @@
 - Roles Administrator, Kit Manager, Supervisor, Operative, Viewer; nine permission areas; per-depot scoping with row-level security and an isolation test for every site-owned table.
 - Audit log with filters and CSV export; settings table with reminder days, default days out and the timeout warning.
 - Offline licence module with NorthKit's own (empty) public key list; the demo company generator and `pnpm db:seed-demo`.
-- App shell in the NorthSpec house style with an overview. Placeholder accent Kit Teal, mark, icons and sign-in picture.
+- App shell in the NorthSpec house style with an overview. Placeholder accent, mark, icons and sign-in picture (replaced in the brand release).
 - The reporting login reads views only.
 
 ### Sprint 0: documents and research

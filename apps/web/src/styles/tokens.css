@@ -1,7 +1,7 @@
 /* NorthSpec design tokens: the single source of colour, type, radius and spacing.
    Token names and shared values follow the family house style as NorthSlot uses it
    (northspec-standards brand/tokens/tokens.css; S7-11, Chris, 15 Nov 2026). NorthKit
-   overrides only its accent family (Kit Teal, Teal Mist, Kit Teal Light) and adds its own
+   overrides only its accent family (Hi-Vis Yellow, Tag Brass, Tag Cream) and adds its own
    status set. Never hard-code a colour, size or spacing value in app.css that isn't one
    of these. */
 
@@ -13,15 +13,17 @@
   --northspec-paper: #f5f3ee; /* Paper: the page */
   --northspec-navy: #18224a; /* Deep Navy: the page in dark mode */
 
-  /* ---- Product accent: NorthKit (brand/tokens/accent.css) ---- */
-  --accent: #0e7490; /* Kit Teal, 5.4:1 on white */
+  /* ---- Product accent: NorthKit, from BrandCentre northkit/tokens/accent.css ----
+     Hi-Vis Yellow is a LIGHT accent: text and icons on it are Ink, never white. Anything
+     that sits on an --accent fill must use --colour-on-accent. Never use the accent itself
+     as text on Paper or white: that is --accent-text (Tag Brass). */
+  --accent: #f2c200; /* Hi-Vis Yellow: buttons, active nav, mark */
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
-  --accent-weak: #e3f2f6; /* Teal Mist: selected rows, chips, the current filter */
-  --accent-light: #7fd0e3; /* Kit Teal Light: marks on the Ink sidebar and in dark mode */
-  --colour-on-accent: #ffffff; /* text and icons on an --accent fill (primary buttons) */
-  /* Accent used AS text: a touch darker, so it keeps 4.5:1 on Teal Mist (6.9:1). */
-  --accent-text: color-mix(in srgb, var(--accent) 90%, black);
-  /* The active-nav bar on the Ink sidebar: Kit Teal Light keeps 3:1 on --sidebar-active. */
+  --accent-weak: #fdf3c4; /* Tag Cream: selected rows, chips, the current filter */
+  --accent-light: #f2c200; /* dark mode and the Ink sidebar: 9.14:1 on Deep Navy */
+  --colour-on-accent: #1b1f24; /* Ink on yellow, 9.85:1 */
+  --accent-text: #6b5600; /* Tag Brass: the accent as text, 6.41:1 on Paper */
+  /* The active-nav bar on the Ink sidebar. */
   --accent-on-dark: var(--accent-light);
 
   /* The accent is for primary buttons, the active nav item and selected things only.
@@ -135,8 +137,8 @@
     --colour-text-muted: #b4bcd0;
     --colour-skeleton: #2c3870;
     --colour-focus: #9db7ff;
-    --accent-weak: color-mix(in srgb, var(--accent) 35%, #18224a);
-    /* Kit Teal Light as text on navy keeps 4.5:1. */
+    --accent-weak: color-mix(in srgb, var(--accent) 20%, #18224a);
+    /* Hi-Vis Yellow as text on navy keeps 4.5:1 (9.14:1). */
     --accent-text: var(--accent-light);
     --sidebar-bg: #10173a;
     --sidebar-muted: #a7b0c8;

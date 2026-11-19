@@ -20,6 +20,6 @@ NORTHSLOT_EMAIL=... NORTHSLOT_PASSWORD=... SCREENS_URL=http://localhost:3205 SCR
   node apps/web/scripts/house-style-check.mjs
 ```
 
-That adds `…northslot-day-board` for each size and theme. **What the pairs show:** the same Ink sidebar, Paper page, page-header pattern (muted context line, large Space Grotesk title, one primary button on the right), card radius, table heads and status pills. The accent is a placeholder (Kit Teal) and the mark is a placeholder: both are replaced from BrandCentre, and every colour already goes through the tokens, so the replacement is one token file.
+That adds `…northslot-day-board` for each size and theme. **What the pairs show:** the same Ink sidebar, Paper page, page-header pattern (muted context line, large Space Grotesk title, one primary button on the right), card radius, table heads and status pills. The accent is Hi-Vis Yellow with the BrandCentre mark (K9, retaken 18 Nov 2026 after the brand release); every colour goes through the tokens, so a change of accent is one token file.
 
 To retake them: seed the demo database (`NORTHKIT_DB_NAME=northkit_demo_test SEED_DEMO_PASSWORD=... pnpm db:seed-demo`), serve the production build on it (`node apps/web/scripts/serve-standalone.mjs 3205`, with `NORTHKIT_DB_NAME=northkit_demo_test NORTHKIT_COOKIE_SECURE=false`), optionally a second server on an empty database for `SCREENS_EMPTY_URL`, and run the script above with `SCREENS_PASSWORD` set to the demo password.

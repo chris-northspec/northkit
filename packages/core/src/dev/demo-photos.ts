@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { PNG } from 'pngjs';
 
 // Placeholder photos for the demo company (S2-6): drawn here in the style of the sign-in
-// picture (a tagged item card on a plain ground, in ink, slate and a teal accent), so the
+// picture (a tagged item card on a plain ground, in ink, slate and Hi-Vis Yellow), so the
 // demo has no stock photos and nothing that looks like a real person, site or product. The
 // same tag always gives the same picture. Demo only: customers upload their own photos.
 
@@ -16,7 +16,7 @@ const SLATE: Rgb = [87, 95, 107];
 const EDGE: Rgb = [200, 196, 186];
 
 const KIND_BAND: Record<string, Rgb> = {
-  ladder: [14, 116, 144],
+  ladder: [242, 194, 0],
   plant: [180, 83, 9],
   power_tool: [59, 91, 219],
   harness: [134, 49, 138],

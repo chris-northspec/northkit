@@ -1,9 +1,9 @@
 /**
  * The identity (house style, as NorthSlot): the NorthKit mark and wordmark ("North" then
- * "Kit" in Kit Teal, Kit Teal Light on the Ink sidebar), with the customer's organisation
+ * "Kit" in Tag Brass, Hi-Vis Yellow on the Ink sidebar), with the customer's organisation
  * name under it once set-up names it. The mark is decorative: the text beside it says what
- * it is. A plain <img>: an SVG gains nothing from next/image. The mark, wordmark and accent
- * are placeholders until BrandCentre chooses them (name check first).
+ * it is. A plain <img>: an SVG gains nothing from next/image. The mark is the BrandCentre
+ * QR kit tag (northkit/logo), and the colours come from the accent tokens.
  */
 export function ProductMark({ organisation }: { organisation?: string | null }) {
   return (
