@@ -53,7 +53,7 @@ Route A, self-hosted web app (ADR 0001): Next.js, Postgres, Docker Compose, the 
 **Assumptions (each needs a quote or Chris's figure before Gate 2):**
 - Solicitor-drafted EULA (studio gate): one-off, amount unknown.
 - ICO registration (studio gate): annual fee, amount to confirm on ico.org.uk.
-- Name checks: UK IPO classes 9 and 42, Companies House, a domain. Not yet done (the name is a working name).
+- Name checks: UK IPO classes 9 and 42, Companies House, a domain. Done by Chris on 17 Nov 2026 (UK IPO and Companies House clear); the domain northkit.co.uk is available and not bought yet.
 - Code-signing or encoding for the release build: per the studio standard; amount unknown.
 - No hosting cost: the buyer runs it.
 

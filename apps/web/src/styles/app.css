@@ -176,7 +176,7 @@ a:hover {
   background: var(--sidebar-active);
   color: var(--sidebar-text);
 }
-/* The current page: weight, a fill and a Kit Teal Light bar, so the bar is never the
+/* The current page: weight, a fill and a Hi-Vis Yellow bar, so the bar is never the
    only cue (and aria-current for screen readers). */
 .sidebar .nav-list a[aria-current='page'] {
   background: var(--sidebar-active);
@@ -2369,7 +2369,7 @@ a.mx-cell:focus-visible {
   }
 }
 
-/* Selected rows and the current choice: Teal Mist, with a teal bar as a second cue. */
+/* Selected rows and the current choice: Tag Cream, with a yellow bar as a second cue. */
 .table tr[aria-current='true'] td,
 .table tr[aria-selected='true'] td {
   background: var(--accent-weak);

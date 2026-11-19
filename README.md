@@ -1,8 +1,8 @@
 # NorthKit
 
-**Know where it is. Know it's safe.** (working tagline) A self-hosted register of plant, tools and equipment for contractors, maintenance firms, plant hire depots and manufacturers: every item labelled with a QR code, checked out to a person, van or site in two taps, inspections scheduled and recorded, defective kit quarantined so it can't be issued, and certificates kept against the item.
+**Know where it is. Know it's safe.** A self-hosted register of plant, tools and equipment for contractors, maintenance firms, plant hire depots and manufacturers: every item labelled with a QR code, checked out to a person, van or site in two taps, inspections scheduled and recorded, defective kit quarantined so it can't be issued, and certificates kept against the item.
 
-A NorthSpec product (working name; banner Construction & Trades). Route A: the customer installs it on their own server; NorthSpec never hosts it, never sees the data, and the product never contacts NorthSpec.
+A NorthSpec product (banner Construction & Trades). Route A: the customer installs it on their own server; NorthSpec never hosts it, never sees the data, and the product never contacts NorthSpec.
 
 **What NorthKit is not:** it records inspections and certificates. It never performs, certifies or signs off a statutory examination: a thorough examination under LOLER is done by a competent person, and NorthKit stores their report and the due date. You remain responsible for having examinations done by a competent person.
 
