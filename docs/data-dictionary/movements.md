@@ -18,6 +18,8 @@ Evidence: every check-out, check-in, move, missing report, found, and transfer s
 | `from_location_id` | uuid | yes |  | `core.locations` | Where the item was before; filled in by the trigger from the item, never typed. |
 | `to_user_id` | uuid | yes |  | `core.users` | [personal] The person it went to (a check-out to a person). |
 | `to_location_id` | uuid | yes |  | `core.locations` | The location it went to, in the same depot (a van, job site, store or yard). |
+| `from_status` | text | no |  |  | The item's status before the movement; filled in by the trigger, never typed. |
+| `to_status` | text | no |  |  | The item's status after the movement; filled in by the trigger, never typed. With from_status it lets history be replayed exactly (items out each day). |
 | `due_back_on` | date | yes |  |  | For a check-out: the date it is due back, in the depot's time zone. |
 | `note` | text | yes |  |  | A note: the condition on check-in, why it was moved, where it was found. |
 | `occurred_at` | timestamp with time zone | no | `now()` |  | When it happened (UTC): the phone's clock for a change made offline, otherwise now. Also the partition key. created_at says when it reached the server. |
@@ -86,6 +88,9 @@ An item sent from one depot to another. In transit until received at the destina
 | `to_site_id` | uuid | no |  | `core.sites` | The receiving depot. |
 | `item_id` | uuid | no |  | `register.items` | The item sent. A plain foreign key: the item's depot changes when the transfer is received. |
 | `kit_transfer_id` | uuid | yes |  | `movements.transfers` | For a part of a kit sent with it: the kit's transfer. |
+| `from_site_code` | text | no |  |  | The sending depot's code when sent, so the receiving depot can name it without being able to see the depot. |
+| `to_site_code` | text | no |  |  | The receiving depot's code when sent. |
+| `from_time_zone` | text | no |  |  | The sending depot's time zone when sent: expected_on and "overdue" are in it. |
 | `asset_number` | text | no |  |  | The item's asset number when sent, so the receiving depot can show it before it can see the item. |
 | `kind_name` | text | no |  |  | The item's kind when sent, for the same reason. |
 | `carrier` | text | no |  |  | Who or what carries it: a carrier, a van or a person, as typed. |
