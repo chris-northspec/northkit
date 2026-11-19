@@ -57,6 +57,26 @@ Every location with its site and parent codes, for Power BI and Excel. _(view)_
 | `depth` | integer | yes |  |  | Level in the tree: 1 at the top. |
 | `archived` | boolean | yes |  |  | True if the location is archived. |
 
+## `reporting.movements`
+
+Every check-out, check-in, move, missing report, found and transfer step, for Power BI and Excel. _(view)_
+
+| Column | Type | Null | Default | References | Description |
+| --- | --- | --- | --- | --- | --- |
+| `movement_id` | uuid | yes |  |  | Movement id (movements.movements.id). |
+| `site_code` | text | yes |  |  | The depot it happened at. |
+| `asset_number` | text | yes |  |  | The item's asset number. |
+| `movement_type` | text | yes |  |  | check_out, check_in, move, missing, found, transfer_out, transfer_in or transfer_cancel. |
+| `from_user_id` | uuid | yes |  |  | [personal] Who held the item before (a user id). |
+| `from_location_code` | text | yes |  |  | Where the item was before. |
+| `to_user_id` | uuid | yes |  |  | [personal] The person it went to (a user id). |
+| `to_location_code` | text | yes |  |  | The location it went to. |
+| `due_back_on` | date | yes |  |  | For a check-out: the date it is due back. |
+| `note` | text | yes |  |  | The note recorded with it. |
+| `occurred_at` | timestamp with time zone | yes |  |  | When it happened (UTC). |
+| `recorded_at` | timestamp with time zone | yes |  |  | When it reached the server (UTC). |
+| `recorded_by` | uuid | yes |  |  | [personal] Who recorded it (a user id). |
+
 ## `reporting.sites`
 
 One row per site (depot or branch), for Power BI and Excel. _(view)_
@@ -71,3 +91,37 @@ One row per site (depot or branch), for Power BI and Excel. _(view)_
 | `country_code` | character(2) | yes |  |  | ISO 3166-1 alpha-2 country code. |
 | `time_zone` | text | yes |  |  | IANA time zone of the site. |
 | `archived` | boolean | yes |  |  | True if the site is archived. |
+
+## `reporting.stocktakes`
+
+Every stocktake of a location and what it found, for Power BI and Excel. _(view)_
+
+| Column | Type | Null | Default | References | Description |
+| --- | --- | --- | --- | --- | --- |
+| `stocktake_id` | uuid | yes |  |  | Stocktake id (movements.stocktakes.id). |
+| `site_code` | text | yes |  |  | The depot. |
+| `location_code` | text | yes |  |  | The location counted. |
+| `status` | text | yes |  |  | counting or closed. |
+| `started_at` | timestamp with time zone | yes |  |  | When counting began (UTC). |
+| `closed_at` | timestamp with time zone | yes |  |  | When it was closed (UTC). |
+| `expected_count` | integer | yes |  |  | Items expected at the location. |
+| `found_count` | integer | yes |  |  | Expected items that were scanned. |
+| `not_found_count` | integer | yes |  |  | Expected items that were not scanned. |
+| `unexpected_count` | integer | yes |  |  | Items scanned that were not expected there. |
+
+## `reporting.transfers`
+
+Items sent between depots and whether they have arrived, for Power BI and Excel. _(view)_
+
+| Column | Type | Null | Default | References | Description |
+| --- | --- | --- | --- | --- | --- |
+| `transfer_id` | uuid | yes |  |  | Transfer id (movements.transfers.id). |
+| `from_site_code` | text | yes |  |  | The sending depot. |
+| `to_site_code` | text | yes |  |  | The receiving depot. |
+| `asset_number` | text | yes |  |  | The item's asset number. |
+| `kind_name` | text | yes |  |  | The item's kind. |
+| `carrier` | text | yes |  |  | Who or what carried it. |
+| `expected_on` | date | yes |  |  | The date it was expected. |
+| `sent_at` | timestamp with time zone | yes |  |  | When it was sent (UTC). |
+| `status` | text | yes |  |  | in_transit, received or cancelled. |
+| `closed_at` | timestamp with time zone | yes |  |  | When it was received or cancelled (UTC). |

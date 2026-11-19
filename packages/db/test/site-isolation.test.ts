@@ -23,6 +23,8 @@ interface SiteRefs {
 }
 
 interface Shared {
+  /** A third depot that transfers are sent to, so neither A nor B can see them by receiving. */
+  otherSiteId: string;
   users: string[];
   roles: string[];
   kindId: string;
@@ -88,6 +90,41 @@ const FIXTURES: Record<string, Fixture> = {
     touch: 'sort_order = sort_order',
     deletable: true,
   },
+  // Evidence: insert only. A 'move' to the depot's own location is the simplest valid movement.
+  'movements.movements': {
+    insert: (s) => [
+      `INSERT INTO movements.movements (site_id, item_id, movement_type, to_location_id)
+       VALUES ($1, $2::uuid, 'move', $3::uuid) RETURNING id`,
+      [s.siteId, s.itemId, s.locationId],
+    ],
+    touch: null,
+  },
+  // Sent from the row's depot to a third depot, which neither A nor B is.
+  'movements.transfers': {
+    insert: (s, sh) => [
+      `INSERT INTO movements.transfers (site_id, to_site_id, item_id, asset_number, kind_name, carrier, expected_on)
+       VALUES ($1, $2::uuid, $3::uuid, 'PROBE', 'Probe', 'Van', current_date + 3) RETURNING id`,
+      [s.siteId, sh.otherSiteId, s.itemId],
+    ],
+    touch: 'note = note',
+  },
+  'movements.stocktakes': {
+    insert: (s, _sh, n) => [
+      `WITH loc AS (INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'store', $2, 'Count store') RETURNING id)
+       INSERT INTO movements.stocktakes (site_id, location_id) SELECT $1, id FROM loc RETURNING id`,
+      [s.siteId, `ST${n}${t}`],
+    ],
+    touch: 'note = note',
+  },
+  'movements.stocktake_lines': {
+    insert: (s, _sh, n) => [
+      `WITH loc AS (INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'store', $2, 'Line store') RETURNING id),
+            st AS (INSERT INTO movements.stocktakes (site_id, location_id) SELECT $1, id FROM loc RETURNING id)
+       INSERT INTO movements.stocktake_lines (site_id, stocktake_id, item_id) SELECT $1, st.id, $3::uuid FROM st RETURNING id`,
+      [s.siteId, `SL${n}${t}`, s.itemId],
+    ],
+    touch: 'reason = reason',
+  },
   'audit.audit_events': {
     insert: (s) => [
       `INSERT INTO audit.audit_events (action, entity_type, site_id)
@@ -101,7 +138,7 @@ const FIXTURES: Record<string, Fixture> = {
 let admin: pg.Pool;
 let app: pg.Pool;
 const t = tag();
-const shared: Shared = { users: [], roles: [], kindId: '' };
+const shared: Shared = { otherSiteId: '', users: [], roles: [], kindId: '' };
 let siteA: SiteRefs;
 let siteB: SiteRefs;
 
@@ -164,6 +201,12 @@ beforeAll(async () => {
   }
   shared.kindId = (
     await admin.query<{ id: string }>('SELECT id FROM register.kinds ORDER BY name LIMIT 1')
+  ).rows[0]!.id;
+  shared.otherSiteId = (
+    await admin.query<{ id: string }>(
+      `INSERT INTO core.sites (code, name) VALUES ($1, 'Third depot') RETURNING id`,
+      [`C${t}`],
+    )
   ).rows[0]!.id;
   siteA = await siteRefs(`A${t}`);
   siteB = await siteRefs(`B${t}`);
@@ -259,7 +302,7 @@ describe.each(Object.keys(FIXTURES))('isolation: %s', (table) => {
             siteB.siteId,
             rowIds[table]!.a,
           ]),
-        ).rejects.toMatchObject({ code: expect.stringMatching(/^(42501|23503)$/) });
+        ).rejects.toMatchObject({ code: expect.stringMatching(/^(42501|23503|23514)$/) });
       });
     },
   );

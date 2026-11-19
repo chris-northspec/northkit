@@ -43,6 +43,8 @@ Places kit can be, per site: a store, a van, a yard or a job site. Items are che
 | `updated_by` | uuid | yes |  | `core.users` | User who last changed the row; null for system jobs. Set by trigger. |
 | `row_version` | integer | no | `1` |  | Starts at 1 and goes up by one on every update. Office edits send it back for optimistic locking. |
 | `archived_at` | timestamp with time zone | yes |  |  | When the row was archived (UTC). Master data is archived, never deleted (DB-04). Null means current. |
+| `assigned_user_id` | uuid | yes |  | `core.users` | [personal] For a van: the person who drives or looks after it, so "to my van" means this van. An Operative may check kit out to themselves and to their own van only. Null for other locations. |
+| `last_counted_at` | timestamp with time zone | yes |  |  | When a stocktake of this location was last closed (UTC); null if never counted. Locations not counted for longer than the recount setting need action. |
 
 ## `core.organisations`
 

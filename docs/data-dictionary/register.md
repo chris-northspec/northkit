@@ -80,8 +80,8 @@ Every tool and piece of equipment the organisation owns or has hired in. Site-ow
 | `hire_company` | text | yes |  |  | Company the item is hired from; required when hired in, empty when owned. |
 | `hire_reference` | text | yes |  |  | The hire company's agreement or contract reference. |
 | `off_hire_date` | date | yes |  |  | Date the item is due to go back to the hire company. |
-| `location_id` | uuid | yes |  | `core.locations` | Where the item is now (a store, van, yard or job site of the same depot); null if not placed yet. |
-| `status` | text | no | `'available'::text` |  | available, out, quarantined, missing or retired. Transitions are enforced by a trigger; Sprint 2 sets only available and retired, later sprints set the rest. |
+| `location_id` | uuid | yes |  | `core.locations` | Where the item is now (a store, van, yard or job site of the same depot); null if not placed yet, with a person, in transit or missing. Set at registration, then changed only by the movement trigger. |
+| `status` | text | no | `'available'::text` |  | available, out (with a person, in a van or at a job site), in_transit (between depots), quarantined, missing or retired. Transitions are enforced by a trigger; out, in_transit and missing are set only by the movement trigger. |
 | `retired_at` | timestamp with time zone | yes |  |  | When the item was retired; set with retired_reason. |
 | `retired_reason` | text | yes |  |  | Why the item was retired (sold, scrapped, failed beyond repair...). |
 | `is_kit` | boolean | no | `false` |  | True if the item is a kit (a harness set) that holds other items. A kit can't itself be inside a kit. |
@@ -94,6 +94,10 @@ Every tool and piece of equipment the organisation owns or has hired in. Site-ow
 | `updated_at` | timestamp with time zone | no | `now()` |  | When the row last changed (UTC). Set by trigger. |
 | `updated_by` | uuid | yes |  | `core.users` | User who last changed the row; null for system jobs. Set by trigger. |
 | `row_version` | integer | no | `1` |  | Starts at 1 and goes up by one on every update. Office edits send it back for optimistic locking. |
+| `holder_user_id` | uuid | yes |  | `core.users` | [personal] The person holding the item while it is out to a person; null otherwise. Changed only by the movement trigger. |
+| `due_back_on` | date | yes |  |  | The date the item is due back, in the depot's time zone; null if none was set. Changed only by the movement trigger. |
+| `overdue_at` | timestamp with time zone | yes |  |  | The moment the item becomes overdue: the start of the day after due_back_on in the depot's time zone (UTC). Later sprints' reminders read this. Changed only by the movement trigger. |
+| `checked_out_at` | timestamp with time zone | yes |  |  | When the item went out (UTC, as recorded on the phone if offline); null if it is not out. Changed only by the movement trigger. |
 
 ## `register.kind_rules`
 
@@ -132,3 +136,4 @@ Kinds of item (power tool, ladder, harness...) and the inspection rules each car
 | `updated_at` | timestamp with time zone | no | `now()` |  | When the row last changed (UTC). Set by trigger. |
 | `updated_by` | uuid | yes |  | `core.users` | User who last changed the row; null for system jobs. Set by trigger. |
 | `row_version` | integer | no | `1` |  | Starts at 1 and goes up by one on every update. Office edits send it back for optimistic locking. |
+| `default_days_out` | integer | yes |  |  | Days this kind of kit is normally out for: the due-back date offered at check-out. Null uses the organisation setting checkout.default_days_out. |
