@@ -11,6 +11,7 @@ import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '../styles/tokens.css';
 import '../styles/app.css';
+import '../styles/v2.css';
 
 export const metadata: Metadata = {
   title: { default: PRODUCT_NAME, template: `%s · ${PRODUCT_NAME}` },

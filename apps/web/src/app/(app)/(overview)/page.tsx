@@ -1,22 +1,18 @@
 import type { Metadata } from 'next';
+import { Building2 } from 'lucide-react';
 import { can, overview, type DepotRow } from '@northkit/core';
+import { CardHead } from '@/components/ui/primitives';
+import { DensityToggle } from '@/components/ui/density-toggle';
 import { Kpis, NeedsAction } from '@/components/overview/overview-cards';
 import { EmptyState } from '@/components/states';
 import { db } from '@/lib/server/db';
 import { requireSession, siteSelection } from '@/lib/server/session';
+import { ukMoment, n } from '@/lib/format';
 import { chooseSiteAction } from '../site-actions';
 
 export const metadata: Metadata = { title: 'Overview' };
 
-const n = (value: number) => value.toLocaleString('en-GB');
-const shortWhen = (d: Date) =>
-  new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/London',
-  }).format(d);
+const shortWhen = (d: Date) => ukMoment(d);
 
 /**
  * The Overview (S1-9): four stat cards, then the depots table beside a Needs action
@@ -63,7 +59,7 @@ export default async function OverviewPage() {
         <div className="split-main">
           <DepotsPanel depots={o.depots} />
         </div>
-        <NeedsAction o={o} />
+        <NeedsAction o={o} now={now} />
       </div>
     </>
   );
@@ -72,10 +68,19 @@ export default async function OverviewPage() {
 /** One row per depot: choosing one sets the site filter and stays on the Overview. */
 function DepotsPanel({ depots }: { depots: DepotRow[] }) {
   return (
-    <section aria-labelledby="depots-heading">
-      <h2 id="depots-heading">Depots</h2>
+    <section className="table-card" id="depots-card" aria-labelledby="depots-heading">
+      <div className="table-toolbar">
+        <CardHead
+          icon={Building2}
+          title="Depots"
+          headingId="depots-heading"
+          meta={`${n(depots.length)} ${depots.length === 1 ? 'depot' : 'depots'} you work at`}
+        />
+        <span className="grow" />
+        <DensityToggle targetId="depots-card" />
+      </div>
       <div className="table-wrap" role="region" aria-label="Depots" tabIndex={0}>
-        <table className="table table-cards sites-table">
+        <table className="dt">
           <thead>
             <tr>
               <th scope="col">Depot</th>
@@ -96,13 +101,19 @@ function DepotsPanel({ depots }: { depots: DepotRow[] }) {
           <tbody>
             {depots.map((d) => (
               <tr key={d.siteId}>
-                <td data-label="Depot">
-                  <form action={chooseSiteAction}>
+                <td className="cell-first">
+                  <form action={chooseSiteAction} className="cell-identity">
                     <input type="hidden" name="siteId" value={d.siteId} />
-                    <button type="submit" className="button-link site-choose">
-                      <span className="visually-hidden">Show </span>
-                      {d.code} · {d.name}
-                    </button>
+                    <span className="icon-chip" aria-hidden="true">
+                      <Building2 size={18} className="icon" />
+                    </span>
+                    <span className="cell-text">
+                      <button type="submit" className="button-link site-choose cell-main">
+                        <span className="visually-hidden">Show </span>
+                        {d.code} · {d.name}
+                      </button>
+                      <span className="cell-sub">{n(d.locations)} locations</span>
+                    </span>
                   </form>
                 </td>
                 <td data-label="Stores" className="num">

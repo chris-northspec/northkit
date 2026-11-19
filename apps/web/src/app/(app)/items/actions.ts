@@ -6,6 +6,7 @@ import {
   addItemPhoto,
   createItem,
   deleteItemPhoto,
+  markFound,
   replaceItemLabel,
   retireItem,
   setItemKit,
@@ -163,5 +164,23 @@ export async function deletePhotoAction(
     await deleteItemPhoto(db(), session.actor, photoId);
     revalidatePath(`/items/${itemId}`);
     return { message: 'Photo removed.' };
+  });
+}
+
+/** Records a missing item as found, where it was found (a Supervisor or above). */
+export async function markFoundAction(
+  itemId: string,
+  _s: FormState,
+  form: FormData,
+): Promise<FormState> {
+  const session = await requireSession();
+  return formAction(form, async () => {
+    const result = await markFound(db(), session.actor, {
+      itemId,
+      locationId: text(form, 'locationId'),
+      note: text(form, 'note'),
+    });
+    revalidatePath(`/items/${itemId}`);
+    return { message: result.message };
   });
 }

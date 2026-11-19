@@ -30,6 +30,7 @@ export * from './services/items';
 export * from './services/movements';
 export * from './services/transfers';
 export * from './services/stocktakes';
+export * from './services/offline';
 export * from './services/photos';
 export * from './services/labels';
 export * from './services/item-import';

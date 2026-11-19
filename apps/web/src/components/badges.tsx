@@ -25,6 +25,7 @@ export function InUsePill() {
 const ITEM_TONES: Record<ItemStatus, { label: string; tone: PillTone }> = {
   available: { label: 'Available', tone: 'success' },
   out: { label: 'Out', tone: 'info' },
+  in_transit: { label: 'In transit', tone: 'info' },
   quarantined: { label: 'Quarantined', tone: 'danger' },
   missing: { label: 'Missing', tone: 'warning' },
   retired: { label: 'Retired', tone: 'neutral' },

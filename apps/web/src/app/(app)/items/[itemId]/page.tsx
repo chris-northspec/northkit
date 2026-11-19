@@ -2,7 +2,22 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import {
+  History,
+  LogIn,
+  LogOut,
+  MapPin,
+  PackageSearch,
+  Send,
+  Tag,
+  TriangleAlert,
+} from 'lucide-react';
+import {
   can,
+  incomingTransferFor,
+  itemMovements,
+  MOVEMENT_LABELS,
+  movementChoices,
+  transferDestinations,
   getKind,
   getItem,
   intervalText,
@@ -18,6 +33,10 @@ import {
 import { ActionForm, SelectField } from '@/components/form/action-form';
 import { ItemStatusPill } from '@/components/badges';
 import { orDash } from '@/components/states';
+import { CardHead, Delta, Person } from '@/components/ui/primitives';
+import { ukDay, ukMoment } from '@/lib/format';
+import { markFoundAction } from '../actions';
+import { receiveTransferAction, sendTransferAction } from '../../transfers/actions';
 import { db } from '@/lib/server/db';
 import { orNotFound, routeId } from '@/lib/server/load';
 import { requirePermission } from '@/lib/server/session';
@@ -62,13 +81,29 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
   const proto = h.get('x-forwarded-proto') ?? 'http';
   const code = await itemLabelCode(db(), session.actor, item.id);
   const url = itemLabelUrl(code, host ? `${proto}://${host}` : undefined);
-  const [kind, history, kits] = await Promise.all([
+  const canMove = can(session.actor, 'checkouts.create') && !retired;
+  const canSend = can(session.actor, 'checkouts.edit') && !retired;
+  const [kind, history, movements, kits, incoming, depots, choices] = await Promise.all([
     getKind(db(), session.actor, item.kind_id),
     itemHistory(db(), session.actor, item.id, 20),
+    can(session.actor, 'checkouts.view')
+      ? itemMovements(db(), session.actor, item.id, 30)
+      : Promise.resolve([]),
     edit && !item.is_kit && !item.parent_id
       ? listKits(db(), session.actor, item.site_id)
       : Promise.resolve([]),
+    item.status === 'in_transit'
+      ? incomingTransferFor(db(), session.actor, item.id)
+      : Promise.resolve(null),
+    canSend && item.status === 'available'
+      ? transferDestinations(db(), session.actor)
+      : Promise.resolve([]),
+    canSend && (item.status === 'missing' || item.status === 'in_transit')
+      ? movementChoices(db(), session.actor)
+      : Promise.resolve(null),
   ]);
+  const places = (choices?.places ?? []).filter((x) => x.siteId === item.site_id);
+  const now = new Date();
   const cost = item.cost_pence !== null ? `£${penceToPounds(Number(item.cost_pence))}` : null;
 
   return (
@@ -101,8 +136,148 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
         </div>
       </div>
 
-      <section className="panel" aria-labelledby="details-heading">
-        <h2 id="details-heading">Details</h2>
+      <section className="card card-hero" aria-labelledby="where-heading">
+        <CardHead
+          icon={MapPin}
+          eyebrow="Where it is now"
+          title={
+            item.status === 'out' && item.holder_user_id
+              ? 'With a person'
+              : item.status === 'in_transit'
+                ? 'On its way to another depot'
+                : item.status === 'missing'
+                  ? 'Reported missing'
+                  : detail.locationName
+                    ? detail.locationName
+                    : 'Not placed yet'
+          }
+          headingId="where-heading"
+          meta={
+            detail.locationCode && item.status !== 'missing'
+              ? `${detail.locationCode} · ${detail.siteCode}`
+              : detail.siteCode
+          }
+        />
+        <div className="where-body">
+          {item.status === 'out' && detail.holderName ? <Person name={detail.holderName} /> : null}
+          {item.status === 'out' && item.checked_out_at ? (
+            <p className="muted">Out since {ukMoment(item.checked_out_at, now)}.</p>
+          ) : null}
+          {item.status === 'out' && item.due_back_on ? (
+            <p>
+              Due back <strong>{ukDay(item.due_back_on)}</strong>{' '}
+              {item.overdue_at && item.overdue_at <= now ? <Delta tone="bad">Overdue</Delta> : null}
+            </p>
+          ) : null}
+          {incoming ? (
+            <p>
+              Sent from {incoming.fromSiteCode} by {incoming.carrier}, expected{' '}
+              <strong>{ukDay(incoming.expectedOn)}</strong>.
+            </p>
+          ) : null}
+          {item.status === 'quarantined' ? (
+            <p>
+              <TriangleAlert size={16} className="icon" aria-hidden="true" /> Quarantined: it can’t
+              be checked out until a passed inspection is recorded.
+            </p>
+          ) : null}
+        </div>
+        <div className="card-foot">
+          <span className="row">
+            {canMove && item.status === 'available' ? (
+              <Link className="button button-primary" href={`/move/out?item=${item.id}`}>
+                <LogOut size={16} className="icon" aria-hidden="true" />
+                Check out
+              </Link>
+            ) : null}
+            {canMove && item.status === 'out' ? (
+              <Link className="button button-primary" href={`/move/in?item=${item.id}`}>
+                <LogIn size={16} className="icon" aria-hidden="true" />
+                Check in
+              </Link>
+            ) : null}
+            {canMove && (item.status === 'available' || item.status === 'out') ? (
+              <Link className="button" href={`/move/missing?item=${item.id}`}>
+                <PackageSearch size={16} className="icon" aria-hidden="true" />
+                Report missing
+              </Link>
+            ) : null}
+          </span>
+        </div>
+        {item.status === 'missing' && canSend && places.length ? (
+          <ActionForm action={markFoundAction.bind(null, item.id)} submitLabel="Record it as found">
+            <SelectField
+              name="locationId"
+              label="Where it was found"
+              options={places.map((x) => ({ value: x.id, label: `${x.name} (${x.code})` }))}
+            />
+            <div className="field">
+              <label htmlFor="found-note">Note</label>
+              <input id="found-note" name="note" className="input" maxLength={1000} />
+            </div>
+          </ActionForm>
+        ) : null}
+        {incoming ? (
+          <ActionForm
+            action={receiveTransferAction.bind(null, incoming.id)}
+            submitLabel="Receive it here"
+          >
+            <SelectField
+              name="locationId"
+              label="Put it in"
+              options={(choices?.places ?? [])
+                .filter((x) => x.siteId === incoming.toSiteId)
+                .map((x) => ({ value: x.id, label: `${x.name} (${x.code})` }))}
+            />
+            <div className="field">
+              <label htmlFor="recv-note">Note</label>
+              <input id="recv-note" name="note" className="input" maxLength={1000} />
+            </div>
+          </ActionForm>
+        ) : null}
+      </section>
+
+      {canSend && item.status === 'available' && depots.some((d) => d.id !== item.site_id) ? (
+        <section className="card" aria-labelledby="send-heading">
+          <CardHead
+            icon={Send}
+            headingId="send-heading"
+            title="Send to another depot"
+            meta="It is in transit until the other depot receives it. Nobody can check it out meanwhile."
+          />
+          <ActionForm action={sendTransferAction.bind(null, item.id)} submitLabel="Send it">
+            <SelectField
+              name="toSiteId"
+              label="Depot"
+              options={depots
+                .filter((d) => d.id !== item.site_id)
+                .map((d) => ({ value: d.id, label: `${d.code} · ${d.name}` }))}
+            />
+            <div className="field">
+              <label htmlFor="carrier">Who or what is carrying it</label>
+              <input
+                id="carrier"
+                name="carrier"
+                className="input"
+                required
+                maxLength={200}
+                placeholder="Depot van 3, a courier, Sam Hart"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="expectedOn">Expected on</label>
+              <input id="expectedOn" name="expectedOn" type="date" className="input" required />
+            </div>
+            <div className="field">
+              <label htmlFor="send-note">Note</label>
+              <input id="send-note" name="note" className="input" maxLength={1000} />
+            </div>
+          </ActionForm>
+        </section>
+      ) : null}
+
+      <section className="card" aria-labelledby="details-heading">
+        <CardHead icon={Tag} headingId="details-heading" title="Details" />
         <dl className="details">
           <dt>Kind</dt>
           <dd>
@@ -121,9 +296,11 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
           </dd>
           <dt>Where it is now</dt>
           <dd>
-            {detail.locationCode
-              ? `${detail.locationCode} · ${detail.locationName}`
-              : 'Not placed yet'}
+            {detail.holderName
+              ? detail.holderName
+              : detail.locationCode
+                ? `${detail.locationCode} · ${detail.locationName}`
+                : 'Not placed yet'}
           </dd>
           <dt>Purchased</dt>
           <dd>{orDash(day(item.purchase_date))}</dd>
@@ -152,8 +329,8 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
         </dl>
       </section>
 
-      <section className="panel" aria-labelledby="photos-heading">
-        <h2 id="photos-heading">Photos</h2>
+      <section className="card" aria-labelledby="photos-heading">
+        <CardHead headingId="photos-heading" eyebrow="Photos" title="Photos of the item" />
         {detail.photos.length === 0 ? (
           <p className="muted">No photos yet.</p>
         ) : (
@@ -207,7 +384,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
       </section>
 
       {item.is_kit ? (
-        <section className="panel" aria-labelledby="kit-heading">
+        <section className="card" aria-labelledby="kit-heading">
           <h2 id="kit-heading">In this kit</h2>
           {detail.parts.length === 0 ? (
             <p className="muted">
@@ -235,7 +412,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
           )}
         </section>
       ) : detail.kit ? (
-        <section className="panel" aria-labelledby="kit-heading">
+        <section className="card" aria-labelledby="kit-heading">
           <h2 id="kit-heading">Part of a kit</h2>
           <p>
             In <Link href={`/items/${detail.kit.id}`}>{detail.kit.assetNumber}</Link> (
@@ -250,7 +427,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
           ) : null}
         </section>
       ) : edit && kits.length > 0 ? (
-        <section className="panel" aria-labelledby="kit-heading">
+        <section className="card" aria-labelledby="kit-heading">
           <h2 id="kit-heading">Put in a kit</h2>
           <ActionForm action={setKitAction.bind(null, item.id)} submitLabel="Put in this kit">
             <SelectField
@@ -265,7 +442,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
         </section>
       ) : null}
 
-      <section className="panel" aria-labelledby="label-heading">
+      <section className="card" aria-labelledby="label-heading">
         <h2 id="label-heading">Label</h2>
         <div className="row">
           <div
@@ -305,7 +482,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
         ) : null}
       </section>
 
-      <section className="panel" aria-labelledby="rules-heading">
+      <section className="card" aria-labelledby="rules-heading">
         <h2 id="rules-heading">Inspection rules for this kind</h2>
         {kind.rules.length === 0 ? (
           <p className="muted">This kind has no rules yet.</p>
@@ -326,7 +503,7 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
       </section>
 
       {approve && item.status === 'available' ? (
-        <section className="panel" aria-labelledby="retire-heading">
+        <section className="card" aria-labelledby="retire-heading">
           <h2 id="retire-heading">Retire this item</h2>
           <p className="muted">
             A retired item stays in the register with its history but can’t be changed or issued.
@@ -345,8 +522,41 @@ export default async function ItemPage({ params }: { params: Promise<{ itemId: s
         </section>
       ) : null}
 
-      <section className="panel" aria-labelledby="history-heading">
-        <h2 id="history-heading">History</h2>
+      {movements.length ? (
+        <section className="card" aria-labelledby="moves-heading">
+          <CardHead
+            icon={History}
+            headingId="moves-heading"
+            title="Where it has been"
+            meta="Every check-out, check-in, move, missing report and transfer, newest first. Nothing here is ever edited."
+          />
+          <ol className="timeline">
+            {movements.map((m) => (
+              <li key={m.id}>
+                <span className="timeline-when">{ukMoment(m.occurredAt, now)}</span>
+                <span className="timeline-what">
+                  <strong>{MOVEMENT_LABELS[m.type]}</strong>
+                  {m.fromLabel || m.toLabel ? (
+                    <>
+                      {' '}
+                      {m.fromLabel ? <>from {m.fromLabel} </> : null}
+                      {m.toLabel ? <>to {m.toLabel}</> : null}
+                    </>
+                  ) : null}
+                  {m.dueBackOn ? <>, due back {ukDay(m.dueBackOn)}</> : null}
+                  {m.viaKit ? <>, with kit {m.viaKit}</> : null}
+                  {m.byName ? <> · by {m.byName}</> : null}
+                  {m.offline ? <> · made offline, recorded {ukMoment(m.recordedAt, now)}</> : null}
+                  {m.note ? <span className="timeline-note">“{m.note}”</span> : null}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      <section className="card" aria-labelledby="history-heading">
+        <CardHead headingId="history-heading" eyebrow="Record" title="Changes to the record" />
         {history.length === 0 ? (
           <p className="muted">Nothing recorded.</p>
         ) : (

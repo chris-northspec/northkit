@@ -380,11 +380,11 @@ export async function listTransfers(
   return withScope(db, { ...scopeOf(actor), readOnly: true }, async (tx) => {
     let q = transferQuery(tx, actor, now);
     if (options.open !== false) q = q.where('t.status', '=', 'in_transit');
-    return (await q
+    return await q
       .orderBy('t.expected_on')
       .orderBy('t.sent_at', 'desc')
       .limit(options.limit ?? 200)
-      .execute()) as TransferRow[];
+      .execute();
   });
 }
 
@@ -400,6 +400,6 @@ export async function incomingTransferFor(
       .where('t.item_id', '=', itemId)
       .where('t.status', '=', 'in_transit')
       .executeTakeFirst();
-    return row && (row as TransferRow).incoming ? (row as TransferRow) : null;
+    return row?.incoming ? row : null;
   });
 }

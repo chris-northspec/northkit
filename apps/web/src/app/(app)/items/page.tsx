@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Download, Eye, LogIn, LogOut, Printer, Search } from 'lucide-react';
 import {
   can,
   ITEM_STATUSES,
+  itemStatusCounts,
   listItems,
   listKinds,
   siteChoices,
@@ -11,6 +13,10 @@ import {
 import { FilterChips } from '@/components/filter-chips';
 import { ItemStatusPill } from '@/components/badges';
 import { EmptyState, orDash } from '@/components/states';
+import { CardHead, Person, RowMenu } from '@/components/ui/primitives';
+import { DensityToggle } from '@/components/ui/density-toggle';
+import { KindChip } from '@/components/ui/kind-icon';
+import { n, ukDay } from '@/lib/format';
 import { db } from '@/lib/server/db';
 import { type ItemParams, filterParams, itemChips, itemFilters } from '@/lib/server/item-params';
 import { requirePermission } from '@/lib/server/session';
@@ -32,8 +38,9 @@ export default async function ItemsPage({
   const session = await requirePermission('items.view');
   const params = firstValues(await searchParams) as ItemParams;
   const filters = itemFilters(params);
-  const [result, kinds, depots] = await Promise.all([
+  const [result, counts, kinds, depots] = await Promise.all([
     listItems(db(), session.actor, filters),
+    itemStatusCounts(db(), session.actor, filters),
     listKinds(db(), session.actor),
     siteChoices(db(), session.actor),
   ]);
@@ -45,6 +52,7 @@ export default async function ItemsPage({
   const base = filterParams(params);
   const filtered = chips.length > 0;
   const count = `${result.total.toLocaleString('en-GB')} ${result.total === 1 ? 'item' : 'items'}`;
+  const canMove = can(session.actor, 'checkouts.create');
 
   return (
     <>
@@ -53,7 +61,7 @@ export default async function ItemsPage({
           <p className="page-head-meta">Register</p>
           <h1>Items</h1>
         </div>
-        <div className="row">
+        <div className="page-head-actions sticky-bottom">
           {canAdd ? (
             <Link className="button button-primary" href="/items/new">
               Add an item
@@ -62,7 +70,34 @@ export default async function ItemsPage({
         </div>
       </div>
 
-      <form method="get" action="/items" role="search" className="filter-bar">
+      <ul className="summary-strip" aria-label="Summary of the items in this list">
+        <li>
+          <span className="eyebrow">In this list</span>
+          <span className="figure">
+            {n(counts.total)}{' '}
+            <span className="figure-unit">{counts.total === 1 ? 'item' : 'items'}</span>
+          </span>
+        </li>
+        <li>
+          <span className="eyebrow">Available</span>
+          <span className="figure">{n(counts.byStatus.available)}</span>
+        </li>
+        <li>
+          <span className="eyebrow">Out</span>
+          <span className="figure">
+            {n(counts.byStatus.out)}
+            {counts.overdue > 0 ? (
+              <span className="figure-unit"> · {n(counts.overdue)} overdue</span>
+            ) : null}
+          </span>
+        </li>
+        <li>
+          <span className="eyebrow">Missing or in transit</span>
+          <span className="figure">{n(counts.byStatus.missing + counts.byStatus.in_transit)}</span>
+        </li>
+      </ul>
+
+      <form method="get" action="/items" role="search" className="filter-bar card">
         <div className="field">
           <label htmlFor="q">Search</label>
           <input
@@ -127,6 +162,7 @@ export default async function ItemsPage({
         </div>
         <div className="form-actions">
           <button type="submit" className="button">
+            <Search size={16} className="icon" aria-hidden="true" />
             Filter
           </button>
         </div>
@@ -162,65 +198,120 @@ export default async function ItemsPage({
         )
       ) : (
         <>
-          <div className="table-wrap" role="region" aria-label="Items" tabIndex={0}>
-            <table className="table table-cards">
-              <thead>
-                <tr>
-                  <th scope="col">
-                    <span className="visually-hidden">Photo</span>
-                  </th>
-                  <th scope="col">Asset number</th>
-                  <th scope="col">Kind</th>
-                  <th scope="col">Make and model</th>
-                  <th scope="col">Depot</th>
-                  <th scope="col">Location</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.map((r) => (
-                  <tr key={r.id}>
-                    <td data-label="Photo">
-                      {r.photoId ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          className="item-thumb"
-                          src={`/item-photos/${r.photoId}?v=thumb`}
-                          alt=""
-                          width={48}
-                          height={48}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="item-thumb-none" aria-hidden="true" />
-                      )}
-                    </td>
-                    <td data-label="Asset number">
-                      <Link href={`/items/${r.id}`}>{r.assetNumber}</Link>
-                      {r.isKit ? (
-                        <span className="muted small"> · kit of {r.partCount}</span>
-                      ) : null}
-                      {r.kitAssetNumber ? (
-                        <span className="muted small"> · in {r.kitAssetNumber}</span>
-                      ) : null}
-                    </td>
-                    <td data-label="Kind">{r.kindName}</td>
-                    <td data-label="Make and model">
-                      {orDash([r.make, r.model].filter(Boolean).join(' '))}
-                    </td>
-                    <td data-label="Depot">{r.siteCode}</td>
-                    <td data-label="Location">{orDash(r.locationCode)}</td>
-                    <td data-label="Status">
-                      <ItemStatusPill status={r.status} />
-                      {r.ownership === 'hired_in' ? (
-                        <span className="muted small"> · hired in</span>
-                      ) : null}
-                    </td>
+          <section className="table-card" id="items-card" aria-label="Items">
+            <div className="table-toolbar">
+              <p className="list-count grow" role="status">
+                {count}
+              </p>
+              <DensityToggle targetId="items-card" />
+            </div>
+            <div className="table-wrap" role="region" aria-label="Items" tabIndex={0}>
+              <table className="dt">
+                <thead>
+                  <tr>
+                    <th scope="col">Item</th>
+                    <th scope="col">Where it is</th>
+                    <th scope="col">Depot</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" className="num">
+                      Due back
+                    </th>
+                    <th scope="col">
+                      <span className="visually-hidden">Actions</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {result.rows.map((r) => (
+                    <tr key={r.id}>
+                      <td className="cell-first">
+                        <div className="cell-identity">
+                          {r.photoId ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              className="item-thumb"
+                              src={`/item-photos/${r.photoId}?v=thumb`}
+                              alt=""
+                              width={40}
+                              height={40}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <KindChip kindName={r.kindName} />
+                          )}
+                          <span className="cell-text">
+                            <Link className="cell-main" href={`/items/${r.id}`}>
+                              {r.assetNumber}
+                            </Link>
+                            <span className="cell-sub">
+                              {[
+                                r.kindName,
+                                [r.make, r.model].filter(Boolean).join(' ') || r.description,
+                                r.isKit ? `kit of ${r.partCount}` : null,
+                                r.kitAssetNumber ? `in ${r.kitAssetNumber}` : null,
+                                r.ownership === 'hired_in' ? 'hired in' : null,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="Where it is">
+                        {r.holderName ? <Person name={r.holderName} /> : orDash(r.locationName)}
+                      </td>
+                      <td data-label="Depot">{r.siteCode}</td>
+                      <td data-label="Status">
+                        <ItemStatusPill status={r.status} />
+                      </td>
+                      <td data-label="Due back" className="num">
+                        {r.status === 'out' && r.dueBackOn ? (
+                          <>
+                            {ukDay(r.dueBackOn)}{' '}
+                            {r.overdue ? <span className="badge badge-danger">Overdue</span> : null}
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td data-label="Actions">
+                        <div className="row-actions">
+                          <Link className="button" href={`/items/${r.id}`}>
+                            <Eye size={16} className="icon" aria-hidden="true" />
+                            View
+                          </Link>
+                          {canMove && r.status === 'available' ? (
+                            <Link className="button" href={`/move/out?item=${r.id}`}>
+                              <LogOut size={16} className="icon" aria-hidden="true" />
+                              Check out
+                            </Link>
+                          ) : null}
+                        </div>
+                        <RowMenu label={`More actions for ${r.assetNumber}`}>
+                          <Link href={`/items/${r.id}`}>
+                            <Eye size={16} className="icon" aria-hidden="true" />
+                            View the item
+                          </Link>
+                          {canMove && r.status === 'available' ? (
+                            <Link href={`/move/out?item=${r.id}`}>
+                              <LogOut size={16} className="icon" aria-hidden="true" />
+                              Check out
+                            </Link>
+                          ) : null}
+                          {canMove && r.status === 'out' ? (
+                            <Link href={`/move/in?item=${r.id}`}>
+                              <LogIn size={16} className="icon" aria-hidden="true" />
+                              Check in
+                            </Link>
+                          ) : null}
+                        </RowMenu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
           {result.pages > 1 ? (
             <nav className="pager" aria-label="Pages">
@@ -246,11 +337,16 @@ export default async function ItemsPage({
             </nav>
           ) : null}
 
-          <section className="panel space-above" aria-labelledby="out-heading">
-            <h2 id="out-heading">Take this list with you</h2>
-            <p className="muted">Everything the filters match, not just this page.</p>
+          <section className="card space-above" aria-labelledby="out-heading">
+            <CardHead
+              icon={Download}
+              headingId="out-heading"
+              title="Take this list with you"
+              meta="Everything the filters match, not just this page."
+            />
             <div className="row">
               <a className="button" href={hrefWith('/items/export', base)}>
+                <Download size={16} className="icon" aria-hidden="true" />
                 Download as CSV
               </a>
             </div>
@@ -288,6 +384,7 @@ export default async function ItemsPage({
               </div>
               <div className="form-actions">
                 <button type="submit" className="button">
+                  <Printer size={16} className="icon" aria-hidden="true" />
                   Print labels (PDF)
                 </button>
               </div>
