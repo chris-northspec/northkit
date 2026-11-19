@@ -29,6 +29,7 @@ export type { ItemStatus };
 export const STATUS_LABELS: Record<ItemStatus, string> = {
   available: 'Available',
   out: 'Out',
+  in_transit: 'In transit',
   quarantined: 'Quarantined',
   missing: 'Missing',
   retired: 'Retired',
@@ -386,7 +387,6 @@ const toRow = (v: ItemValues) => ({
   hire_company: v.ownership === 'hired_in' ? v.hireCompany : null,
   hire_reference: v.ownership === 'hired_in' ? v.hireReference : null,
   off_hire_date: v.ownership === 'hired_in' ? v.offHireDate : null,
-  location_id: v.locationId,
   is_kit: v.isKit,
   notes: v.notes,
 });
@@ -416,7 +416,13 @@ export async function createItem(db: Db, actor: ActorContext, input: ItemInput):
       const assetNumber = v.assetNumber || (await nextAssetNumber(tx, db, v.kindId));
       return tx
         .insertInto('register.items')
-        .values({ site_id: v.siteId, asset_number: assetNumber, status: 'available', ...toRow(v) })
+        .values({
+          site_id: v.siteId,
+          asset_number: assetNumber,
+          status: 'available',
+          location_id: v.locationId,
+          ...toRow(v),
+        })
         .returningAll()
         .executeTakeFirstOrThrow();
     });
@@ -450,6 +456,7 @@ export async function updateItem(
         });
       const row = await tx
         .updateTable('register.items')
+        // Where it is changes only by movement: check out or in, a transfer or a stocktake.
         .set({ ...toRow(v), ...(v.assetNumber ? { asset_number: v.assetNumber } : {}) })
         .where('id', '=', id)
         .where('row_version', '=', rowVersion)

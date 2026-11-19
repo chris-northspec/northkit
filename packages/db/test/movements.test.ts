@@ -608,8 +608,8 @@ describe('transfers between depots', () => {
         )
       ).rows[0]!;
       const tr = await c.query<{ id: string }>(
-        `INSERT INTO movements.transfers (site_id, to_site_id, item_id, kit_transfer_id, asset_number, kind_name, carrier, expected_on)
-         VALUES ($1, $2, $3, $4, $5, 'Kind', 'Depot van', $6) RETURNING id`,
+        `INSERT INTO movements.transfers (site_id, to_site_id, item_id, kit_transfer_id, from_site_code, to_site_code, from_time_zone, asset_number, kind_name, carrier, expected_on)
+         VALUES ($1, $2, $3, $4, 'MA', 'MB', 'Europe/London', $5, 'Kind', 'Depot van', $6) RETURNING id`,
         [siteA, toSite, itemId, kitTransfer, info.asset_number, future(2)],
       );
       return tr.rows[0]!.id;

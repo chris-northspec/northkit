@@ -31,8 +31,13 @@ export const SETTING_DEFINITIONS = {
     schema: reminderDays,
   },
   'checkout.default_days_out': {
-    label: 'Days kit may be out before it counts as overdue',
+    label:
+      'Default days out: the due-back date offered at check-out when a kind has none of its own',
     schema: z.number().int().min(1, 'Use 1 day or more.').max(365, 'Use 365 days or fewer.'),
+  },
+  'stocktake.recount_days': {
+    label: 'Days before a location needs counting again',
+    schema: z.number().int().min(1, 'Use 1 day or more.').max(730, 'Use 730 days or fewer.'),
   },
   'session.timeout_warning_minutes': {
     label: 'Minutes of warning before an idle session ends',

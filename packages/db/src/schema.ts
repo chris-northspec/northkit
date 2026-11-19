@@ -267,9 +267,12 @@ export interface MovementsTable {
   from_location_id: Defaulted<string | null>;
   to_user_id: Defaulted<string | null>;
   to_location_id: Defaulted<string | null>;
+  /** Filled in by the trigger. */
+  from_status: Defaulted<ItemStatus>;
+  to_status: Defaulted<ItemStatus>;
   due_back_on: Defaulted<string | null>;
   note: Defaulted<string | null>;
-  occurred_at: Defaulted<Date | string>;
+  occurred_at: ColumnType<Date, Date | string | undefined, never>;
   via_kit_id: Defaulted<string | null>;
   transfer_id: Defaulted<string | null>;
   created_at: TriggerSet<Date>;
@@ -286,11 +289,14 @@ export interface TransfersTable extends StandardColumns {
   to_site_id: string;
   item_id: string;
   kit_transfer_id: Defaulted<string | null>;
+  from_site_code: string;
+  to_site_code: string;
+  from_time_zone: string;
   asset_number: string;
   kind_name: string;
   carrier: string;
   expected_on: string;
-  sent_at: Defaulted<Date | string>;
+  sent_at: ColumnType<Date, Date | string | undefined, never>;
   note: Defaulted<string | null>;
   status: Defaulted<TransferStatus>;
   closed_at: Defaulted<Date | null>;
@@ -303,8 +309,8 @@ export interface StocktakesTable extends StandardColumns {
   site_id: string;
   location_id: string;
   status: Defaulted<'counting' | 'closed'>;
-  started_at: Defaulted<Date | string>;
-  closed_at: Defaulted<Date | string | null>;
+  started_at: ColumnType<Date, Date | string | undefined, never>;
+  closed_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   closed_by: Defaulted<string | null>;
   expected_count: Defaulted<number | null>;
   found_count: Defaulted<number | null>;
@@ -320,7 +326,7 @@ export interface StocktakeLinesTable extends StandardColumns {
   site_id: string;
   stocktake_id: string;
   item_id: string;
-  scanned_at: Defaulted<Date | string | null>;
+  scanned_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
   scanned_by: Defaulted<string | null>;
   expected: Defaulted<boolean | null>;
   outcome: Defaulted<StocktakeOutcome | null>;

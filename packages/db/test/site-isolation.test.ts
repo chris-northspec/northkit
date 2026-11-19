@@ -102,8 +102,8 @@ const FIXTURES: Record<string, Fixture> = {
   // Sent from the row's depot to a third depot, which neither A nor B is.
   'movements.transfers': {
     insert: (s, sh) => [
-      `INSERT INTO movements.transfers (site_id, to_site_id, item_id, asset_number, kind_name, carrier, expected_on)
-       VALUES ($1, $2::uuid, $3::uuid, 'PROBE', 'Probe', 'Van', current_date + 3) RETURNING id`,
+      `INSERT INTO movements.transfers (site_id, to_site_id, item_id, from_site_code, to_site_code, from_time_zone, asset_number, kind_name, carrier, expected_on)
+       VALUES ($1, $2::uuid, $3::uuid, 'FROM', 'TO', 'Europe/London', 'PROBE', 'Probe', 'Van', current_date + 3) RETURNING id`,
       [s.siteId, sh.otherSiteId, s.itemId],
     ],
     touch: 'note = note',

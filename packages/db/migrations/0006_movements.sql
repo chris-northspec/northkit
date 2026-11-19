@@ -218,6 +218,9 @@ CREATE TABLE movements.transfers (
   to_site_id           uuid NOT NULL REFERENCES core.sites (id),
   item_id              uuid NOT NULL REFERENCES register.items (id),
   kit_transfer_id      uuid REFERENCES movements.transfers (id),
+  from_site_code       text NOT NULL,
+  to_site_code         text NOT NULL,
+  from_time_zone       text NOT NULL,
   asset_number         text NOT NULL,
   kind_name            text NOT NULL,
   carrier              text NOT NULL CHECK (length(btrim(carrier)) BETWEEN 1 AND 200),
@@ -259,6 +262,9 @@ COMMENT ON COLUMN movements.transfers.site_id IS 'The sending depot (row-level s
 COMMENT ON COLUMN movements.transfers.to_site_id IS 'The receiving depot.';
 COMMENT ON COLUMN movements.transfers.item_id IS 'The item sent. A plain foreign key: the item''s depot changes when the transfer is received.';
 COMMENT ON COLUMN movements.transfers.kit_transfer_id IS 'For a part of a kit sent with it: the kit''s transfer.';
+COMMENT ON COLUMN movements.transfers.from_site_code IS 'The sending depot''s code when sent, so the receiving depot can name it without being able to see the depot.';
+COMMENT ON COLUMN movements.transfers.to_site_code IS 'The receiving depot''s code when sent.';
+COMMENT ON COLUMN movements.transfers.from_time_zone IS 'The sending depot''s time zone when sent: expected_on and "overdue" are in it.';
 COMMENT ON COLUMN movements.transfers.asset_number IS 'The item''s asset number when sent, so the receiving depot can show it before it can see the item.';
 COMMENT ON COLUMN movements.transfers.kind_name IS 'The item''s kind when sent, for the same reason.';
 COMMENT ON COLUMN movements.transfers.carrier IS 'Who or what carries it: a carrier, a van or a person, as typed.';
@@ -428,6 +434,8 @@ CREATE TABLE movements.movements (
   from_location_id uuid,
   to_user_id       uuid REFERENCES core.users (id),
   to_location_id   uuid,
+  from_status      text NOT NULL CHECK (from_status IN ('available', 'out', 'in_transit', 'quarantined', 'missing', 'retired')),
+  to_status        text NOT NULL CHECK (to_status IN ('available', 'out', 'in_transit', 'quarantined', 'missing', 'retired')),
   due_back_on      date,
   note             text CHECK (length(note) <= 1000),
   occurred_at      timestamptz NOT NULL DEFAULT now(),
@@ -460,6 +468,8 @@ COMMENT ON COLUMN movements.movements.from_user_id IS '[personal] Who held the i
 COMMENT ON COLUMN movements.movements.from_location_id IS 'Where the item was before; filled in by the trigger from the item, never typed.';
 COMMENT ON COLUMN movements.movements.to_user_id IS '[personal] The person it went to (a check-out to a person).';
 COMMENT ON COLUMN movements.movements.to_location_id IS 'The location it went to, in the same depot (a van, job site, store or yard).';
+COMMENT ON COLUMN movements.movements.from_status IS 'The item''s status before the movement; filled in by the trigger, never typed.';
+COMMENT ON COLUMN movements.movements.to_status IS 'The item''s status after the movement; filled in by the trigger, never typed. With from_status it lets history be replayed exactly (items out each day).';
 COMMENT ON COLUMN movements.movements.due_back_on IS 'For a check-out: the date it is due back, in the depot''s time zone.';
 COMMENT ON COLUMN movements.movements.note IS 'A note: the condition on check-in, why it was moved, where it was found.';
 COMMENT ON COLUMN movements.movements.occurred_at IS 'When it happened (UTC): the phone''s clock for a change made offline, otherwise now. Also the partition key. created_at says when it reached the server.';
@@ -566,7 +576,6 @@ DECLARE
   new_overdue timestamptz;
   new_out_at timestamptz;
   new_site uuid;
-  part_ids uuid[];
   part_from text[];
 BEGIN
   -- A kit's parts are moved by their kit, in bulk: the kit's own movement already did it.
@@ -594,6 +603,7 @@ BEGIN
   -- Where it was: always taken from the item, never from the caller.
   NEW.from_user_id := it.holder_user_id;
   NEW.from_location_id := it.location_id;
+  NEW.from_status := it.status;
   IF NEW.movement_type = 'transfer_in' THEN
     NEW.from_location_id := NULL;
   END IF;
@@ -777,17 +787,30 @@ BEGIN
     new_location := NEW.to_location_id;
   END IF;
 
+  NEW.to_status := new_status;
+
   -- The item itself and, for a kit, its parts. A part changes only from the status the
   -- kit's movement applies to, and gets a movement row of its own, flagged as applied.
   IF NEW.movement_type = 'transfer_in' THEN
     -- Parent and parts change depot in ONE statement, so the (site_id, parent_id) key holds.
+    PERFORM set_config('northkit.cascade', 'on', true);
     WITH moved AS (
       UPDATE register.items c SET
         site_id = new_site, status = new_status, holder_user_id = NULL, location_id = new_location,
         due_back_on = NULL, overdue_at = NULL, checked_out_at = NULL
-       WHERE c.id = it.id OR (c.parent_id = it.id AND c.status = 'in_transit')
-      RETURNING c.id)
-    SELECT array_agg(id) FILTER (WHERE id <> it.id) INTO part_ids FROM moved;
+        FROM register.items o
+       WHERE o.id = c.id AND (c.id = it.id OR (c.parent_id = it.id AND c.status = 'in_transit'))
+      RETURNING c.id, o.status AS old_status, o.holder_user_id AS old_holder, o.location_id AS old_location)
+    INSERT INTO movements.movements
+      (site_id, item_id, movement_type, from_user_id, from_location_id, from_status, to_status, to_user_id,
+       to_location_id, due_back_on, note, occurred_at, via_kit_id, transfer_id)
+    SELECT NEW.site_id, m.id, NEW.movement_type, m.old_holder, NULL, m.old_status, new_status, NEW.to_user_id,
+           NEW.to_location_id, NEW.due_back_on, NEW.note, NEW.occurred_at, it.id,
+           (SELECT t.id FROM movements.transfers t
+             WHERE t.item_id = m.id AND t.kit_transfer_id = NEW.transfer_id
+             ORDER BY t.created_at DESC LIMIT 1)
+      FROM moved m WHERE m.id <> it.id;
+    PERFORM set_config('northkit.cascade', 'off', true);
   ELSE
     UPDATE register.items SET
       status = new_status, holder_user_id = new_holder, location_id = new_location,
@@ -799,28 +822,25 @@ BEGIN
         WHEN 'check_in' THEN ARRAY['out'] WHEN 'found' THEN ARRAY['missing']
         WHEN 'transfer_cancel' THEN ARRAY['in_transit']
         ELSE ARRAY['available', 'out'] END;
+      PERFORM set_config('northkit.cascade', 'on', true);
       WITH moved AS (
         UPDATE register.items c SET
           status = new_status, holder_user_id = new_holder, location_id = new_location,
           due_back_on = new_due, overdue_at = new_overdue, checked_out_at = new_out_at
-         WHERE c.parent_id = it.id AND c.status = ANY (part_from)
-        RETURNING c.id)
-      SELECT array_agg(id) INTO part_ids FROM moved;
+          FROM register.items o
+         WHERE o.id = c.id AND c.parent_id = it.id AND c.status = ANY (part_from)
+        RETURNING c.id, o.status AS old_status, o.holder_user_id AS old_holder, o.location_id AS old_location)
+      INSERT INTO movements.movements
+        (site_id, item_id, movement_type, from_user_id, from_location_id, from_status, to_status, to_user_id,
+         to_location_id, due_back_on, note, occurred_at, via_kit_id, transfer_id)
+      SELECT NEW.site_id, m.id, NEW.movement_type, m.old_holder, m.old_location, m.old_status, new_status,
+             NEW.to_user_id, NEW.to_location_id, NEW.due_back_on, NEW.note, NEW.occurred_at, it.id,
+             (SELECT t.id FROM movements.transfers t
+               WHERE t.item_id = m.id AND t.kit_transfer_id = NEW.transfer_id
+               ORDER BY t.created_at DESC LIMIT 1)
+        FROM moved m;
+      PERFORM set_config('northkit.cascade', 'off', true);
     END IF;
-  END IF;
-
-  IF part_ids IS NOT NULL THEN
-    PERFORM set_config('northkit.cascade', 'on', true);
-    INSERT INTO movements.movements
-      (site_id, item_id, movement_type, from_user_id, from_location_id, to_user_id, to_location_id,
-       due_back_on, note, occurred_at, via_kit_id, transfer_id)
-    SELECT NEW.site_id, p.id, NEW.movement_type, NEW.from_user_id, NEW.from_location_id, NEW.to_user_id,
-           NEW.to_location_id, NEW.due_back_on, NEW.note, NEW.occurred_at, it.id,
-           (SELECT t.id FROM movements.transfers t
-             WHERE t.item_id = p.id AND t.kit_transfer_id = NEW.transfer_id
-             ORDER BY t.created_at DESC LIMIT 1)
-      FROM unnest(part_ids) AS p (id);
-    PERFORM set_config('northkit.cascade', 'off', true);
   END IF;
 
   -- Close the transfer, here, so the two can't disagree.
@@ -903,3 +923,18 @@ COMMENT ON COLUMN reporting.stocktakes.unexpected_count IS 'Items scanned that w
 
 GRANT SELECT ON reporting.movements, reporting.transfers, reporting.stocktakes TO northkit_readonly;
 REVOKE ALL ON reporting.movements, reporting.transfers, reporting.stocktakes FROM northkit_app;
+
+-- ---------------------------------------------------------------- depots to send to
+-- A person at one depot can't see another depot's row (row-level security), but needs to
+-- choose where to send kit. This owner-run function lists live depots by code and name,
+-- nothing else about them.
+CREATE FUNCTION movements.transfer_destinations() RETURNS TABLE (id uuid, code text, name text)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+  SELECT s.id, s.code, s.name FROM core.sites s WHERE s.archived_at IS NULL ORDER BY s.code
+$$;
+ALTER FUNCTION movements.transfer_destinations() OWNER TO northkit_owner;
+REVOKE EXECUTE ON FUNCTION movements.transfer_destinations() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION movements.transfer_destinations() TO northkit_app;
+COMMENT ON FUNCTION movements.transfer_destinations() IS 'For choosing where to send an item: every live depot''s id, code and name, whatever the caller''s depot scope. Reveals nothing else about a depot.';
