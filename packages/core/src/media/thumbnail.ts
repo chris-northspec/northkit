@@ -56,7 +56,7 @@ export async function makeAnyThumbnail(bytes: Uint8Array): Promise<Uint8Array> {
   // the bytes aren't a WebP it can read.
   let image: { width: number; height: number; data: Uint8ClampedArray } | null;
   try {
-    image = await webp.decode(new Uint8Array(bytes).buffer as ArrayBuffer);
+    image = await webp.decode(new Uint8Array(bytes).buffer);
   } catch {
     image = null;
   }
