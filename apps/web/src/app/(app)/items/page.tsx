@@ -170,7 +170,8 @@ export default async function ItemsPage({
         </form>
       </div>
 
-      <FilterChips chips={chips} count={count} />
+      {/* The table card carries the count; the chips only show when a filter is on. */}
+      {chips.length ? <FilterChips chips={chips} count={count} /> : null}
 
       {result.rows.length === 0 ? (
         filtered ? (
