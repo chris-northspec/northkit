@@ -1,12 +1,11 @@
 import jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
-import { sniffImage } from './images';
+import { imageInfo, sniffImage } from './images';
 
-// Thumbnails for the item page (S2-3), made by the worker. Pure JavaScript (jpeg-js BSD,
-// pngjs MIT): no native library. JPEG and PNG are decoded, scaled down by averaging and
-// written as a small JPEG. WebP has no decoder here (a WebP decoder would be a new
-// dependency), so a WebP gets no thumbnail and the page shows the stored photo scaled by
-// the browser (K22).
+// Thumbnails for the item page (S2-3), made by the worker. No native library: JPEG (jpeg-js,
+// BSD) and PNG (pngjs, MIT) are decoded in JavaScript, and WebP through webp-wasm (MIT; the
+// libwebp WebAssembly from Squoosh, Apache-2.0), in the worker only (K22, Chris 19 Nov 2026).
+// Each is scaled down by averaging and written as a small JPEG.
 
 export const THUMBNAIL_EDGE = 320;
 /** Largest picture decoded for a thumbnail, in pixels, so a crafted file can't use all the memory. */
@@ -14,7 +13,10 @@ export const MAX_DECODE_PIXELS = 40_000_000;
 
 export class NoThumbnailError extends Error {}
 
-/** A JPEG thumbnail no larger than THUMBNAIL_EDGE on its longest side. */
+/**
+ * A JPEG thumbnail no larger than THUMBNAIL_EDGE on its longest side, from a JPEG or PNG.
+ * Synchronous, for the demo seed; the worker uses makeAnyThumbnail, which also takes WebP.
+ */
 export function makeThumbnail(bytes: Uint8Array): Uint8Array {
   const type = sniffImage(bytes);
   let width: number;
@@ -35,6 +37,39 @@ export function makeThumbnail(bytes: Uint8Array): Uint8Array {
   } else {
     throw new NoThumbnailError('No thumbnail for this type.');
   }
+  return scaleToJpeg(width, height, data);
+}
+
+/**
+ * The worker's thumbnail: JPEG, PNG or WebP. A WebP is decoded by libwebp (WebAssembly),
+ * loaded on first use; its size is checked from the header before any pixel is decoded.
+ */
+export async function makeAnyThumbnail(bytes: Uint8Array): Promise<Uint8Array> {
+  if (sniffImage(bytes) !== 'image/webp') return makeThumbnail(bytes);
+  const info = imageInfo(bytes);
+  if (!info) throw new NoThumbnailError('Not a readable WebP.');
+  if (info.width * info.height > MAX_DECODE_PIXELS) throw new NoThumbnailError('Too large.');
+  // A CommonJS module whose functions use `this`: call them on the module object itself.
+  const webp = (await import('webp-wasm')).default;
+  // The decoder reads the whole underlying ArrayBuffer, so it gets its own copy starting at
+  // byte 0 (a Buffer from Node's pool has an offset), and it says null, not an error, when
+  // the bytes aren't a WebP it can read.
+  let image: { width: number; height: number; data: Uint8ClampedArray } | null;
+  try {
+    image = await webp.decode(new Uint8Array(bytes).buffer);
+  } catch {
+    image = null;
+  }
+  if (!image) throw new NoThumbnailError('The WebP could not be decoded.');
+  return scaleToJpeg(image.width, image.height, image.data);
+}
+
+/** Box average into a JPEG no larger than THUMBNAIL_EDGE on its longest side, over white. */
+function scaleToJpeg(
+  width: number,
+  height: number,
+  data: Uint8Array | Uint8ClampedArray,
+): Uint8Array {
   const scale = Math.min(1, THUMBNAIL_EDGE / Math.max(width, height));
   const w = Math.max(1, Math.round(width * scale));
   const h = Math.max(1, Math.round(height * scale));

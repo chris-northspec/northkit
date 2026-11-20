@@ -29,6 +29,7 @@ export type { ItemStatus };
 export const STATUS_LABELS: Record<ItemStatus, string> = {
   available: 'Available',
   out: 'Out',
+  in_transit: 'In transit',
   quarantined: 'Quarantined',
   missing: 'Missing',
   retired: 'Retired',
@@ -155,6 +156,12 @@ export interface ItemListRow {
   status: ItemStatus;
   ownership: 'owned' | 'hired_in';
   locationCode: string | null;
+  locationName: string | null;
+  description: string | null;
+  /** Who has it, while it is out to a person. */
+  holderName: string | null;
+  dueBackOn: string | null;
+  overdue: boolean;
   isKit: boolean;
   kitAssetNumber: string | null;
   /** Items in the kit, for a kit. */
@@ -170,6 +177,7 @@ function baseQuery(tx: Tx, f: ItemFilters) {
     .innerJoin('register.kinds as k', 'k.id', 'i.kind_id')
     .innerJoin('core.sites as s', 's.id', 'i.site_id')
     .leftJoin('core.locations as l', 'l.id', 'i.location_id')
+    .leftJoin('core.users as u', 'u.id', 'i.holder_user_id')
     .leftJoin('register.items as p', 'p.id', 'i.parent_id');
   const search = f.q?.trim();
   if (search) {
@@ -208,6 +216,11 @@ function selectRows(tx: Tx, f: ItemFilters) {
     'i.status',
     'i.ownership',
     'l.code as locationCode',
+    'l.name as locationName',
+    'i.description',
+    'u.display_name as holderName',
+    sql<string | null>`to_char(i.due_back_on, 'YYYY-MM-DD')`.as('dueBackOn'),
+    sql<boolean>`(i.overdue_at IS NOT NULL AND i.overdue_at <= now())`.as('overdue'),
     'i.is_kit as isKit',
     'p.asset_number as kitAssetNumber',
     sql<number>`(SELECT count(*) FROM register.items c WHERE c.parent_id = i.id)::int`.as(
@@ -247,6 +260,34 @@ export async function listItems(
   });
 }
 
+/** How many items a filter matches in each status, for the summary strip over the list. */
+export async function itemStatusCounts(
+  db: Db,
+  actor: ActorContext,
+  filters: ItemFilters = {},
+): Promise<{ total: number; byStatus: Record<ItemStatus, number>; overdue: number }> {
+  requirePermission(actor, 'items.view');
+  return withScope(db, { ...scopeOf(actor), readOnly: true }, async (tx) => {
+    const rows = await baseQuery(tx, { ...filters, status: undefined })
+      .select(['i.status', sql<number>`count(*)::int`.as('n')])
+      .groupBy('i.status')
+      .execute();
+    const overdue = await baseQuery(tx, { ...filters, status: undefined })
+      .select(
+        sql<number>`count(*) FILTER (WHERE i.status = 'out' AND i.overdue_at <= now())::int`.as(
+          'n',
+        ),
+      )
+      .executeTakeFirstOrThrow();
+    const byStatus = Object.fromEntries(ITEM_STATUSES.map((st) => [st, 0])) as Record<
+      ItemStatus,
+      number
+    >;
+    for (const r of rows) byStatus[r.status] = r.n;
+    return { total: rows.reduce((a, r) => a + r.n, 0), byStatus, overdue: overdue.n };
+  });
+}
+
 export interface ItemDetail {
   item: Item;
   kindName: string;
@@ -255,6 +296,8 @@ export interface ItemDetail {
   siteName: string;
   locationCode: string | null;
   locationName: string | null;
+  /** Who has it, while it is out to a person. */
+  holderName: string | null;
   kit: { id: string; assetNumber: string; kindName: string } | null;
   parts: ItemListRow[];
   photos: ItemPhoto[];
@@ -268,6 +311,7 @@ export async function getItem(db: Db, actor: ActorContext, id: string): Promise<
       .innerJoin('register.kinds as k', 'k.id', 'i.kind_id')
       .innerJoin('core.sites as s', 's.id', 'i.site_id')
       .leftJoin('core.locations as l', 'l.id', 'i.location_id')
+      .leftJoin('core.users as u', 'u.id', 'i.holder_user_id')
       .selectAll('i')
       .select([
         'k.name as kindName',
@@ -276,11 +320,21 @@ export async function getItem(db: Db, actor: ActorContext, id: string): Promise<
         's.name as siteName',
         'l.code as locationCode',
         'l.name as locationName',
+        'u.display_name as holderName',
       ])
       .where('i.id', '=', id)
       .executeTakeFirst();
     if (!row) throw new NotFoundError('Item not found.');
-    const { kindName, kindActive, siteCode, siteName, locationCode, locationName, ...item } = row;
+    const {
+      kindName,
+      kindActive,
+      siteCode,
+      siteName,
+      locationCode,
+      locationName,
+      holderName,
+      ...item
+    } = row;
     const kit = item.parent_id
       ? await tx
           .selectFrom('register.items as p')
@@ -307,6 +361,7 @@ export async function getItem(db: Db, actor: ActorContext, id: string): Promise<
       siteName,
       locationCode,
       locationName,
+      holderName,
       kit: kit ?? null,
       parts,
       photos,
@@ -386,7 +441,6 @@ const toRow = (v: ItemValues) => ({
   hire_company: v.ownership === 'hired_in' ? v.hireCompany : null,
   hire_reference: v.ownership === 'hired_in' ? v.hireReference : null,
   off_hire_date: v.ownership === 'hired_in' ? v.offHireDate : null,
-  location_id: v.locationId,
   is_kit: v.isKit,
   notes: v.notes,
 });
@@ -416,7 +470,13 @@ export async function createItem(db: Db, actor: ActorContext, input: ItemInput):
       const assetNumber = v.assetNumber || (await nextAssetNumber(tx, db, v.kindId));
       return tx
         .insertInto('register.items')
-        .values({ site_id: v.siteId, asset_number: assetNumber, status: 'available', ...toRow(v) })
+        .values({
+          site_id: v.siteId,
+          asset_number: assetNumber,
+          status: 'available',
+          location_id: v.locationId,
+          ...toRow(v),
+        })
         .returningAll()
         .executeTakeFirstOrThrow();
     });
@@ -450,6 +510,7 @@ export async function updateItem(
         });
       const row = await tx
         .updateTable('register.items')
+        // Where it is changes only by movement: check out or in, a transfer or a stocktake.
         .set({ ...toRow(v), ...(v.assetNumber ? { asset_number: v.assetNumber } : {}) })
         .where('id', '=', id)
         .where('row_version', '=', rowVersion)

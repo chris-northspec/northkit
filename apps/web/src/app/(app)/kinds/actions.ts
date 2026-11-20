@@ -23,6 +23,7 @@ function kindInput(form: FormData): KindInput {
     name: text(form, 'name'),
     description: text(form, 'description'),
     assetPrefix: text(form, 'assetPrefix'),
+    defaultDaysOut: text(form, 'defaultDaysOut'),
   };
 }
 

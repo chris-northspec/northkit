@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { can, getLocation, KIND_LABELS, locationAncestors, LOCATION_KINDS } from '@northkit/core';
+import {
+  can,
+  getLocation,
+  KIND_LABELS,
+  locationAncestors,
+  LOCATION_KINDS,
+  userChoices,
+} from '@northkit/core';
 import { ActionForm, Field, SelectField } from '@/components/form/action-form';
 import { orDash } from '@/components/states';
 import { db } from '@/lib/server/db';
@@ -23,6 +30,7 @@ export default async function LocationPage({
   if (location.site_id !== siteId) notFound();
   const trail = await locationAncestors(db(), session.actor, location.id);
   const edit = can(session.actor, 'locations.edit');
+  const people = edit && location.kind === 'van' ? await userChoices(db(), session.actor) : [];
   const list = `/sites/${siteId}/locations`;
 
   return (
@@ -52,6 +60,12 @@ export default async function LocationPage({
         <dd>{KIND_LABELS[location.kind]}</dd>
         <dt>Reference</dt>
         <dd>{orDash(location.reference)}</dd>
+        {location.kind === 'van' ? (
+          <>
+            <dt>Looked after by</dt>
+            <dd>{orDash(people.find((p) => p.id === location.assigned_user_id)?.displayName)}</dd>
+          </>
+        ) : null}
         <dt>Inside</dt>
         <dd>{orDash(location.parent_code)}</dd>
         <dt>Notes</dt>
@@ -86,6 +100,18 @@ export default async function LocationPage({
                 hint="A vehicle registration or job number."
                 defaultValue={location.reference ?? ''}
               />
+              {location.kind === 'van' ? (
+                <SelectField
+                  name="assignedUserId"
+                  label="Looked after by"
+                  hint="Whoever drives this van: “To my van” at check-out means this van."
+                  options={[
+                    { value: '', label: 'Nobody in particular' },
+                    ...people.map((p) => ({ value: p.id, label: p.displayName })),
+                  ]}
+                  defaultValue={location.assigned_user_id ?? ''}
+                />
+              ) : null}
               {/* Keeps the parent; moving a location is done from its new parent's page later. */}
               {location.parent_id ? (
                 <input type="hidden" name="parentId" value={location.parent_id} />

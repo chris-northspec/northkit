@@ -74,7 +74,15 @@ describe('pnpm db:seed-demo', () => {
                (SELECT sum(cost_pence) FROM register.items) AS cost,
                (SELECT count(*) FROM core.locations WHERE kind = 'van') AS vans,
                (SELECT count(*) FROM core.sites) AS depots,
-               (SELECT string_agg(asset_number, ',' ORDER BY asset_number) FROM register.items) AS numbers`);
+               (SELECT string_agg(asset_number, ',' ORDER BY asset_number) FROM register.items) AS numbers,
+               (SELECT count(*) FROM movements.movements) AS movements,
+               (SELECT count(*) FROM register.items WHERE status = 'out') AS out,
+               (SELECT count(*) FROM register.items WHERE status = 'out' AND overdue_at < now()) AS overdue,
+               (SELECT count(*) FROM register.items WHERE status = 'missing') AS missing,
+               (SELECT count(*) FROM movements.transfers WHERE status = 'in_transit') AS transit,
+               (SELECT count(*) FROM movements.stocktakes WHERE status = 'closed') AS stocktakes,
+               (SELECT string_agg(asset_number || ':' || status, ',' ORDER BY asset_number) FROM register.items) AS statuses,
+               (SELECT count(DISTINCT (occurred_at AT TIME ZONE 'UTC')::date) FROM movements.movements) AS active_days`);
       return rows[0]!;
     } finally {
       await pool.end();
@@ -91,6 +99,15 @@ describe('pnpm db:seed-demo', () => {
     expect(Number(a.kits)).toBeGreaterThanOrEqual(15);
     expect(Number(a.parts)).toBeGreaterThan(30);
     expect(Number(a.photos)).toBeGreaterThanOrEqual(20);
+    // Three months of history (S3-7): 10 to 15 items overdue, 3 missing, 2 transfers in transit,
+    // a stocktake on each depot's store, and enough days of movements to draw a sparkline.
+    expect(Number(a.movements)).toBeGreaterThan(700);
+    expect(Number(a.overdue)).toBeGreaterThanOrEqual(10);
+    expect(Number(a.overdue)).toBeLessThanOrEqual(15);
+    expect(Number(a.missing)).toBe(3);
+    expect(Number(a.transit)).toBe(2);
+    expect(Number(a.stocktakes)).toBe(3);
+    expect(Number(a.active_days)).toBeGreaterThan(40);
     const files = readdirSync(path.join(dir, 'items'), { recursive: true }).length;
     run();
     const b = await summary();

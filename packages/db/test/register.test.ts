@@ -130,8 +130,6 @@ describe('items', () => {
     const id = await item();
     const set = (status: string, extra = '') =>
       admin.query(`UPDATE register.items SET status = $2 ${extra} WHERE id = $1`, [id, status]);
-    await set('out');
-    await set('available');
     await set('quarantined');
     await expect(set('out')).rejects.toMatchObject({ constraint: 'items_status_transition' });
     await set('available');

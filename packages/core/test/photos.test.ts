@@ -15,7 +15,7 @@ import {
 } from '../src/services/photos';
 import { imageInfo } from '../src/media/images';
 import { fixtures, type Fixtures } from './fixtures';
-import { GIF, jpegWithExif, pngWithText, SVG, webpWithExif } from './samples';
+import { GIF, jpegWithExif, pngWithText, realWebp, SVG, webpWithExif } from './samples';
 
 // S2-3 (acceptance A21): photos. Wrong type refused, oversize refused, EXIF removed from
 // what is stored, another depot's photo is a 404, ten at most, thumbnails by the worker.
@@ -133,12 +133,16 @@ describe('serving', () => {
 });
 
 describe('thumbnails (the worker)', () => {
-  it('makes a JPEG thumbnail for a JPEG and a PNG, and marks a WebP as having none', async () => {
+  it('makes a JPEG thumbnail for a JPEG, a PNG and a WebP (K22), and marks a WebP it cannot decode as having none', async () => {
     const item = (await createItem(f.db, manager, { siteId: siteA, kindId })).id;
     const jpg = await addItemPhoto(f.db, manager, item, jpegWithExif(800, 500));
     const png = await addItemPhoto(f.db, manager, item, pngWithText(200, 100));
+    const real = await addItemPhoto(f.db, manager, item, await realWebp(640, 400));
     const webp = await addItemPhoto(f.db, manager, item, webpWithExif());
-    expect(await makePendingThumbnails(f.db, 100)).toBeGreaterThanOrEqual(2);
+    expect(await makePendingThumbnails(f.db, 100)).toBeGreaterThanOrEqual(3);
+    const webpThumb = await getItemPhoto(f.db, manager, real.id, 'thumb');
+    expect(webpThumb).toMatchObject({ thumbnail: true, type: 'image/jpeg' });
+    expect(imageInfo(webpThumb.bytes)).toMatchObject({ width: 320, height: 200 });
     const thumb = await getItemPhoto(f.db, manager, jpg.id, 'thumb');
     expect(thumb).toMatchObject({ thumbnail: true, type: 'image/jpeg' });
     expect(

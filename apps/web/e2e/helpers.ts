@@ -50,9 +50,15 @@ export async function expectNoSideways(page: Page) {
   });
 }
 
-/** Waits until the page has hydrated and gone quiet, so input isn't overwritten. */
+/**
+ * Waits until React has hydrated the page (components/hydrated.tsx), so typing isn't lost
+ * and a click reaches React, not the plain form. Never `networkidle`: under the development
+ * server the network never goes quiet, which is what made demo-link.spec.ts time out.
+ */
 export async function ready(page: Page) {
-  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(() => document.documentElement.dataset.hydrated === 'true', null, {
+    timeout: 90_000,
+  });
 }
 
 /**
@@ -116,4 +122,104 @@ export async function openMenu(page: Page) {
   if (await menu.isVisible()) {
     if ((await menu.getAttribute('aria-expanded')) !== 'true') await menu.click();
   }
+}
+
+// ---------------------------------------------------------------- database fixtures (S3)
+// Items and counts for the movement journeys are made straight in the e2e database, so each
+// test has kit of its own with known asset numbers and nothing depends on another test's.
+
+import { createPool } from '@northkit/db';
+import { E2E_DB_NAME } from '../playwright.config';
+
+export interface MadeItem {
+  id: string;
+  asset: string;
+}
+
+/** Runs `fn` against the e2e database as the superuser (fixtures only: it bypasses RLS). */
+export async function withDb<T>(
+  fn: (pool: ReturnType<typeof createPool>) => Promise<T>,
+): Promise<T> {
+  const pool = createPool('admin', { database: E2E_DB_NAME, max: 1 });
+  try {
+    return await fn(pool);
+  } finally {
+    await pool.end();
+  }
+}
+
+/** Makes `count` power tools at depot A, in the given location (the main store by default). */
+export async function makeItems(
+  count: number,
+  tag: string,
+  options: { location?: string; depot?: 'E2E-A' | 'E2E-B' } = {},
+): Promise<MadeItem[]> {
+  return withDb(async (pool) => {
+    const site = (
+      await pool.query('SELECT id FROM core.sites WHERE code = $1', [options.depot ?? 'E2E-A'])
+    ).rows[0]!.id;
+    const location = (
+      await pool.query('SELECT id FROM core.locations WHERE code = $1 AND site_id = $2', [
+        options.location ?? 'A-STORE',
+        site,
+      ])
+    ).rows[0]!.id;
+    const kind = (await pool.query(`SELECT id FROM register.kinds WHERE name = 'Power tool'`))
+      .rows[0]!.id;
+    const out: MadeItem[] = [];
+    for (let n = 1; n <= count; n++) {
+      const asset = `MV-${tag}-${n}`;
+      const row = await pool.query(
+        `INSERT INTO register.items (site_id, kind_id, asset_number, location_id, description) VALUES ($1, $2, $3, $4, 'Cordless drill') RETURNING id`,
+        [site, kind, asset, location],
+      );
+      out.push({ id: row.rows[0]!.id, asset });
+    }
+    return out;
+  });
+}
+
+/** A new store at depot A with its own items: a stocktake of it has known expectations. */
+export async function makeStore(
+  tag: string,
+  itemCount: number,
+): Promise<{ name: string; items: MadeItem[] }> {
+  const name = `Count store ${tag}`;
+  await withDb(async (pool) => {
+    const site = (await pool.query(`SELECT id FROM core.sites WHERE code = 'E2E-A'`)).rows[0]!.id;
+    await pool.query(
+      `INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'store', $2, $3)`,
+      [site, `CNT-${tag}`, name],
+    );
+  });
+  return { name, items: await makeItems(itemCount, tag, { location: `CNT-${tag}` }) };
+}
+
+export async function itemRow(
+  id: string,
+): Promise<{ status: string; holder: string | null; location: string | null; site: string }> {
+  return withDb(async (pool) => {
+    const r = await pool.query(
+      `SELECT i.status, u.email AS holder, l.code AS location, s.code AS site
+         FROM register.items i LEFT JOIN core.users u ON u.id = i.holder_user_id
+         LEFT JOIN core.locations l ON l.id = i.location_id JOIN core.sites s ON s.id = i.site_id WHERE i.id = $1`,
+      [id],
+    );
+    return r.rows[0] as never;
+  });
+}
+
+/** Scanner targets are at least 56 px, for gloves (standard 13, scanner screens). */
+export async function expectBigTargets(page: Page) {
+  const small = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>('.scan-btn')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      if (r.height < 55.5)
+        out.push(`${(el.textContent ?? '').trim().slice(0, 30)} ${Math.round(r.height)}px`);
+    }
+    return out;
+  });
+  expect(small).toEqual([]);
 }

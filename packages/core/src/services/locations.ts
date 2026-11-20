@@ -45,6 +45,8 @@ export const locationInputSchema = z.object({
   name: z.string().trim().min(1, 'Enter a name.').max(200, 'Use 200 characters or fewer.'),
   kind: z.enum(LOCATION_KINDS, { message: 'Choose a kind.' }),
   parentId: optionalId,
+  /** For a van: the person who looks after it, so "to my van" means this van (S3-2). */
+  assignedUserId: optionalId,
   reference: z
     .string()
     .trim()
@@ -219,6 +221,7 @@ export async function createLocation(
           kind: v.kind,
           code: v.code,
           name: v.name,
+          assigned_user_id: v.kind === 'van' ? v.assignedUserId : null,
           reference: v.reference,
           notes: v.notes,
         })
@@ -256,6 +259,7 @@ export async function updateLocation(
           name: v.name,
           kind: v.kind,
           parent_id: v.parentId,
+          assigned_user_id: v.kind === 'van' ? v.assignedUserId : null,
           reference: v.reference,
           notes: v.notes,
         })

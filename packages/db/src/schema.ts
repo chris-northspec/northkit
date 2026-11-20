@@ -75,6 +75,10 @@ export interface LocationsTable extends StandardColumns, Archivable {
   notes: Defaulted<string | null>;
   /** Maintained by trigger from parent_id. */
   path: TriggerSet<string>;
+  /** [personal] The person who looks after a van. */
+  assigned_user_id: Defaulted<string | null>;
+  /** When a stocktake of the location was last closed. */
+  last_counted_at: Defaulted<Date | null>;
 }
 
 export interface SettingsTable extends StandardColumns {
@@ -145,7 +149,14 @@ export interface AuditEventsTable {
 
 export const RULE_TYPES = ['loler', 'puwer', 'pat', 'calibration', 'pre_use', 'other'] as const;
 export type RuleType = (typeof RULE_TYPES)[number];
-export const ITEM_STATUSES = ['available', 'out', 'quarantined', 'missing', 'retired'] as const;
+export const ITEM_STATUSES = [
+  'available',
+  'out',
+  'in_transit',
+  'quarantined',
+  'missing',
+  'retired',
+] as const;
 export type ItemStatus = (typeof ITEM_STATUSES)[number];
 
 export interface KindsTable extends StandardColumns {
@@ -153,6 +164,8 @@ export interface KindsTable extends StandardColumns {
   description: Defaulted<string | null>;
   asset_prefix: Defaulted<string | null>;
   active: Defaulted<boolean>;
+  /** Days this kind is normally out for; null uses the organisation setting. */
+  default_days_out: Defaulted<number | null>;
 }
 
 export interface KindRulesTable extends StandardColumns {
@@ -196,6 +209,11 @@ export interface ItemsTable extends StandardColumns {
   label_version: Defaulted<number>;
   attributes: ColumnType<Record<string, unknown>, string | undefined, string>;
   notes: Defaulted<string | null>;
+  /** Set only by the movement trigger. */
+  holder_user_id: Defaulted<string | null>;
+  due_back_on: Defaulted<string | null>;
+  overdue_at: Defaulted<Date | null>;
+  checked_out_at: Defaulted<Date | null>;
 }
 
 export interface ItemPhotosTable extends StandardColumns {
@@ -227,6 +245,95 @@ export interface ImportsTable extends StandardColumns {
   error: Defaulted<string | null>;
 }
 
+export const MOVEMENT_TYPES = [
+  'check_out',
+  'check_in',
+  'move',
+  'missing',
+  'found',
+  'transfer_out',
+  'transfer_in',
+  'transfer_cancel',
+] as const;
+export type MovementType = (typeof MOVEMENT_TYPES)[number];
+
+/** Evidence: insert only. from_* are filled in by the trigger from the item. */
+export interface MovementsTable {
+  id: Defaulted<string>;
+  site_id: string;
+  item_id: string;
+  movement_type: MovementType;
+  from_user_id: Defaulted<string | null>;
+  from_location_id: Defaulted<string | null>;
+  to_user_id: Defaulted<string | null>;
+  to_location_id: Defaulted<string | null>;
+  /** Filled in by the trigger. */
+  from_status: Defaulted<ItemStatus>;
+  to_status: Defaulted<ItemStatus>;
+  due_back_on: Defaulted<string | null>;
+  note: Defaulted<string | null>;
+  occurred_at: ColumnType<Date, Date | string | undefined, never>;
+  via_kit_id: Defaulted<string | null>;
+  transfer_id: Defaulted<string | null>;
+  created_at: TriggerSet<Date>;
+  created_by: TriggerSet<string | null>;
+  updated_at: TriggerSet<Date>;
+  updated_by: TriggerSet<string | null>;
+  row_version: TriggerSet<number>;
+}
+
+export type TransferStatus = 'in_transit' | 'received' | 'cancelled';
+
+export interface TransfersTable extends StandardColumns {
+  site_id: string;
+  to_site_id: string;
+  item_id: string;
+  kit_transfer_id: Defaulted<string | null>;
+  from_site_code: string;
+  to_site_code: string;
+  from_time_zone: string;
+  asset_number: string;
+  kind_name: string;
+  carrier: string;
+  expected_on: string;
+  sent_at: ColumnType<Date, Date | string | undefined, never>;
+  note: Defaulted<string | null>;
+  status: Defaulted<TransferStatus>;
+  closed_at: Defaulted<Date | null>;
+  closed_by: Defaulted<string | null>;
+  received_location_id: Defaulted<string | null>;
+  received_note: Defaulted<string | null>;
+}
+
+export interface StocktakesTable extends StandardColumns {
+  site_id: string;
+  location_id: string;
+  status: Defaulted<'counting' | 'closed'>;
+  started_at: ColumnType<Date, Date | string | undefined, never>;
+  closed_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  closed_by: Defaulted<string | null>;
+  expected_count: Defaulted<number | null>;
+  found_count: Defaulted<number | null>;
+  not_found_count: Defaulted<number | null>;
+  unexpected_count: Defaulted<number | null>;
+  note: Defaulted<string | null>;
+}
+
+export type StocktakeOutcome = 'found' | 'not_found' | 'unexpected';
+export type StocktakeDecision = 'missing' | 'ignored' | 'moved_here' | 'note_only';
+
+export interface StocktakeLinesTable extends StandardColumns {
+  site_id: string;
+  stocktake_id: string;
+  item_id: string;
+  scanned_at: ColumnType<Date | null, Date | string | null | undefined, Date | string | null>;
+  scanned_by: Defaulted<string | null>;
+  expected: Defaulted<boolean | null>;
+  outcome: Defaulted<StocktakeOutcome | null>;
+  decision: Defaulted<StocktakeDecision | null>;
+  reason: Defaulted<string | null>;
+}
+
 export interface Database {
   'register.kinds': KindsTable;
   'register.kind_rules': KindRulesTable;
@@ -234,6 +341,10 @@ export interface Database {
   'register.items': ItemsTable;
   'register.item_photos': ItemPhotosTable;
   'register.imports': ImportsTable;
+  'movements.movements': MovementsTable;
+  'movements.transfers': TransfersTable;
+  'movements.stocktakes': StocktakesTable;
+  'movements.stocktake_lines': StocktakeLinesTable;
   'core.users': UsersTable;
   'core.organisations': OrganisationsTable;
   'core.sites': SitesTable;
@@ -258,6 +369,10 @@ export type Kind = Selectable<KindsTable>;
 export type KindRule = Selectable<KindRulesTable>;
 export type Item = Selectable<ItemsTable>;
 export type ItemPhoto = Selectable<ItemPhotosTable>;
+export type Movement = Selectable<MovementsTable>;
+export type Transfer = Selectable<TransfersTable>;
+export type Stocktake = Selectable<StocktakesTable>;
+export type StocktakeLine = Selectable<StocktakeLinesTable>;
 export type ItemImport = Selectable<ImportsTable>;
 export type Role = Selectable<RolesTable>;
 export type Licence = Selectable<LicencesTable>;

@@ -51,6 +51,23 @@ export const kindInputSchema = z.object({
       'Use up to 8 capital letters or digits, starting with a letter.',
     )
     .prefault(''),
+  /** Days kit of this kind is normally out for (K33): the due-back date offered at check-out. Blank uses the organisation setting. */
+  defaultDaysOut: z
+    .string()
+    .trim()
+    .transform((v, ctx) => {
+      if (v === '') return null;
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 365) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Use a whole number of days from 1 to 365, or leave it blank.',
+        });
+        return z.NEVER;
+      }
+      return n;
+    })
+    .prefault(''),
 });
 export type KindInput = z.input<typeof kindInputSchema>;
 
@@ -141,7 +158,12 @@ export async function createKind(db: Db, actor: ActorContext, input: KindInput):
     return await withScope(db, scopeOf(actor), (tx) =>
       tx
         .insertInto('register.kinds')
-        .values({ name: v.name, description: v.description, asset_prefix: v.assetPrefix })
+        .values({
+          name: v.name,
+          description: v.description,
+          asset_prefix: v.assetPrefix,
+          default_days_out: v.defaultDaysOut,
+        })
         .returningAll()
         .executeTakeFirstOrThrow(),
     );
@@ -164,7 +186,12 @@ export async function updateKind(
     return await withScope(db, scopeOf(actor), async (tx) => {
       const row = await tx
         .updateTable('register.kinds')
-        .set({ name: v.name, description: v.description, asset_prefix: v.assetPrefix })
+        .set({
+          name: v.name,
+          description: v.description,
+          asset_prefix: v.assetPrefix,
+          default_days_out: v.defaultDaysOut,
+        })
         .where('id', '=', id)
         .where('row_version', '=', rowVersion)
         .returningAll()

@@ -9,5 +9,6 @@ Every table and column, from the `COMMENT`s in the migrations (DB-14). Columns w
 | [`public`](public.md) | standard public schema | 1 |
 | [`core`](core.md) | The organisation, sites, locations, users, roles, sessions, settings and the licence. | 11 |
 | [`register`](register.md) | The item register: kinds and their inspection rules, items, kit sets, photos, asset-number counters and spreadsheet imports (Sprint 2). | 6 |
+| [`movements`](movements.md) | Where kit is and who has it: the append-only movement record, transfers between depots and stocktakes (Sprint 3). | 4 |
 | [`audit`](audit.md) | Append-only audit trail of every create, change and delete, partitioned by month (DB-08). | 1 |
-| [`reporting`](reporting.md) | Documented read-only views for Power BI and Excel (DB-10). | 4 |
+| [`reporting`](reporting.md) | Documented read-only views for Power BI and Excel (DB-10). | 7 |

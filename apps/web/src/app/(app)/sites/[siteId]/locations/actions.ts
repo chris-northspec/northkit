@@ -20,6 +20,7 @@ function locationInput(form: FormData): LocationInput {
     name: text(form, 'name'),
     kind: text(form, 'kind') as LocationKind,
     parentId: text(form, 'parentId') || null,
+    assignedUserId: text(form, 'assignedUserId') || null,
     reference: text(form, 'reference'),
     notes: text(form, 'notes'),
   };

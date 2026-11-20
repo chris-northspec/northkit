@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { can, getItem, resolveItemLabel } from '@northkit/core';
+import { can, getItem, incomingTransferFor, resolveItemLabel } from '@northkit/core';
 import { ProductMark } from '@/components/product-mark';
 import { db } from '@/lib/server/db';
 import { currentSession } from '@/lib/server/session';
@@ -36,11 +36,15 @@ export default async function ScanPage({ params }: { params: Promise<{ code: str
       // Not an item this person can see: they get the public page, like anyone else.
     }
     if (visible) redirect(`/items/${scan.itemId}`);
+    // An item on its way to this person's depot can't be seen yet: scanning it opens the
+    // transfer, which they receive there (S3-3).
+    const incoming = await incomingTransferFor(db(), session.actor, scan.itemId).catch(() => null);
+    if (incoming) redirect(`/transfers#transfer-${incoming.id}`);
   }
 
   return (
     <main className="auth-page">
-      <div className="auth-card stack">
+      <div className="auth-card card-hero stack">
         <p className="auth-product">
           <ProductMark />
         </p>

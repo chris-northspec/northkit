@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { Hydrated } from '@/components/hydrated';
 import { PRODUCT_NAME } from '@northkit/core';
 // Inter and Space Grotesk, self-hosted: the font files are built into the app and served from this
 // server, never fetched from a font service (OFL-1.1, font files only; see LICENCES).
@@ -11,6 +12,7 @@ import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '../styles/tokens.css';
 import '../styles/app.css';
+import '../styles/v2.css';
 
 export const metadata: Metadata = {
   title: { default: PRODUCT_NAME, template: `%s · ${PRODUCT_NAME}` },
@@ -39,7 +41,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Hydrated />
+      </body>
     </html>
   );
 }

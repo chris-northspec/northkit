@@ -37,16 +37,19 @@ test('the overview shows the stat cards, the depots table and what needs action'
   page,
 }) => {
   await page.goto('/');
-  const cards = page.locator('.kpis');
-  await expect(cards.getByRole('link', { name: /^Depots\s*\d+/ })).toBeVisible();
-  await expect(cards.getByRole('link', { name: /^Locations\s*\d+/ })).toBeVisible();
-  await expect(cards.getByRole('link', { name: /^Vans\s*\d+/ })).toBeVisible();
-  await expect(cards.getByRole('link', { name: /^People/ })).toBeVisible();
+  // Four stat cards (S3-1): each is one link to the list behind its figure.
+  const cards = page.locator('.stats');
+  await expect(cards.getByRole('link', { name: /^Items out\s*\d+/ })).toBeVisible();
+  await expect(cards.getByRole('link', { name: /^Overdue returns\s*\d+/ })).toBeVisible();
+  await expect(cards.getByRole('link', { name: /^Missing\s*\d+/ })).toBeVisible();
+  await expect(cards.getByRole('link', { name: /^In transit\s*\d+/ })).toBeVisible();
+  await expect(cards.locator('.card-hero')).toHaveCount(1);
   await expect(page.locator('.table-wrap')).toContainText('E2E-C');
   const needs = page
     .getByRole('region', { name: 'Needs action' })
     .or(page.locator('section.needs-action'));
-  await expect(needs).toContainText('E2E-C · Cedarfield depot has no stores, vans or yards yet');
+  await expect(needs).toContainText('Set up E2E-C · Cedarfield depot');
+  await expect(needs).toContainText('It has no stores, vans or yards yet');
   await expectAccessible(page);
 });
 

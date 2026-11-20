@@ -133,3 +133,96 @@ describe('text and statuses', () => {
     });
   }
 });
+
+// House style v2 (standard 13): every new surface, neutral, accent-ramp and chart pair, in
+// light and dark. A colour that is only decorative (a tick beside its label) isn't listed.
+describe('v2 tokens', () => {
+  for (const [name, theme] of [
+    ['light', light],
+    ['dark', dark],
+  ] as const) {
+    it(`keeps text and muted text readable on every surface level in ${name}`, () => {
+      for (const bg of ['--surface-0', '--surface-1', '--surface-2', '--surface-3']) {
+        expect(
+          check(theme, 'var(--colour-text)', `var(${bg})`),
+          `text on ${bg}`,
+        ).toBeGreaterThanOrEqual(7);
+        expect(
+          check(theme, 'var(--colour-text-muted)', `var(${bg})`),
+          `muted on ${bg}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    it(`reads the eyebrow, table heads and neutral chips in ${name}`, () => {
+      for (const bg of ['--surface-0', '--surface-1', '--surface-2'])
+        expect(
+          check(theme, 'var(--neutral-600)', `var(${bg})`),
+          `eyebrow on ${bg}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      for (const fg of ['--neutral-700', '--neutral-800', '--neutral-900'])
+        expect(
+          check(theme, `var(${fg})`, 'var(--neutral-200)'),
+          `${fg} on neutral-200`,
+        ).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it(`reads the accent ramp's text and icons in ${name}`, () => {
+      // Icon chips: accent-700 on accent-50; the accent as text on its tints.
+      expect(check(theme, 'var(--accent-700)', 'var(--accent-50)')).toBeGreaterThanOrEqual(4.5);
+      expect(check(theme, 'var(--accent-700)', 'var(--surface-1)')).toBeGreaterThanOrEqual(3);
+      for (const tint of ['--accent-50', '--accent-100']) {
+        expect(
+          check(theme, 'var(--accent-text)', `var(${tint})`),
+          `accent text on ${tint}`,
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+          check(theme, 'var(--colour-text)', `var(${tint})`),
+          `text on ${tint}`,
+        ).toBeGreaterThanOrEqual(7);
+      }
+      // The hero figure is the accent as text on a card.
+      expect(check(theme, 'var(--accent-text)', 'var(--surface-1)')).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it(`puts the on-accent colour on the accent fill, its hover and the scanner header in ${name}`, () => {
+      for (const fill of ['--accent', '--accent-500', '--accent-600'])
+        expect(
+          check(theme, 'var(--colour-on-accent)', `var(${fill})`),
+          fill,
+        ).toBeGreaterThanOrEqual(7);
+    });
+
+    it(`keeps charts, sparklines, borders and the focus ring visible in ${name}`, () => {
+      for (const bg of ['--surface-0', '--surface-1']) {
+        for (const fg of ['--neutral-500', '--viz-1', '--viz-2', '--viz-3', '--viz-4', '--viz-5'])
+          expect(check(theme, `var(${fg})`, `var(${bg})`), `${fg} on ${bg}`).toBeGreaterThanOrEqual(
+            3,
+          );
+        expect(
+          check(theme, 'var(--colour-focus)', `var(${bg})`),
+          `focus on ${bg}`,
+        ).toBeGreaterThanOrEqual(3);
+        expect(
+          check(theme, 'var(--colour-border-strong)', `var(${bg})`),
+          `input border on ${bg}`,
+        ).toBeGreaterThanOrEqual(3);
+      }
+      // Severity edges beside their words.
+      for (const edge of ['--colour-warning', '--colour-danger'])
+        expect(check(theme, `var(${edge})`, 'var(--surface-1)'), edge).toBeGreaterThanOrEqual(3);
+    });
+
+    it(`keeps the active nav item readable on the sidebar in ${name}`, () => {
+      const tint = 'color-mix(in srgb, var(--accent) 16%, var(--sidebar-bg))';
+      expect(check(theme, 'var(--sidebar-text)', tint)).toBeGreaterThanOrEqual(4.5);
+      expect(check(theme, 'var(--accent-on-dark)', tint)).toBeGreaterThanOrEqual(3);
+    });
+  }
+
+  it('makes every ramp step from the one accent line, with nothing hard-coded to a product', () => {
+    for (const step of ['50', '100', '200', '300', '700'])
+      expect(light[`--accent-${step}`], step).toMatch(/color-mix\(in srgb, var\(--accent\)/);
+    expect(light['--accent-500']).toBe('var(--accent)');
+  });
+});

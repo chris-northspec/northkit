@@ -26,6 +26,13 @@ export default async function NewKindPage() {
           />
         </div>
         <Field name="description" label="What it covers" maxLength={1000} />
+        <Field
+          name="defaultDaysOut"
+          label="Usually out for (days)"
+          hint="The due-back date offered at check-out. Blank uses the organisation setting."
+          inputMode="numeric"
+          maxLength={3}
+        />
       </ActionForm>
       <p className="muted">You add its inspection rules on the next page.</p>
     </>

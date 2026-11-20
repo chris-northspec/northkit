@@ -2,7 +2,10 @@
    Token names and shared values follow the family house style as NorthSlot uses it
    (northspec-standards brand/tokens/tokens.css; S7-11, Chris, 15 Nov 2026). NorthKit
    overrides only its accent family (Hi-Vis Yellow, Tag Brass, Tag Cream) and adds its own
-   status set. Never hard-code a colour, size or spacing value in app.css that isn't one
+   status set. House style v2 (northspec-standards standard 13, Chris, 18 Nov 2026; NorthKit
+   is the pilot, Sprint 3): a warm neutral scale, four surface levels, an accent ramp made
+   from the one --accent line with color-mix, five radii, three shadow levels, motion
+   tokens and a data-viz palette. Never hard-code a colour, size or spacing value in app.css that isn't one
    of these. */
 
 :root {
@@ -25,14 +28,45 @@
   --accent-text: #6b5600; /* Tag Brass: the accent as text, 6.41:1 on Paper */
   /* The active-nav bar on the Ink sidebar. */
   --accent-on-dark: var(--accent-light);
+  /* The accent ramp (v2): tints, hover, pressed and an icon colour, all from the one
+     --accent line. A product overrides --accent (and, for a light accent, the on-accent
+     and text colours) and the whole ramp follows. */
+  --accent-50: color-mix(in srgb, var(--accent) 12%, #ffffff);
+  --accent-100: color-mix(in srgb, var(--accent) 24%, #ffffff);
+  --accent-200: color-mix(in srgb, var(--accent) 45%, #ffffff);
+  --accent-300: color-mix(in srgb, var(--accent) 70%, #ffffff);
+  --accent-500: var(--accent);
+  --accent-600: var(--accent-hover);
+  --accent-700: color-mix(in srgb, var(--accent) 45%, black); /* icons and figures on accent-50 */
 
   /* The accent is for primary buttons, the active nav item and selected things only.
      Links, focus rings, information and statuses each have their own colour below. */
 
-  /* ---- Neutrals ---- */
-  --colour-bg: var(--northspec-paper); /* the page */
-  --colour-card: #ffffff; /* cards, tables, panels, inputs on the page */
-  --colour-surface: #f7f6f2; /* a quiet fill inside a card: table heads, hover */
+  /* ---- Neutrals (v2): warm greys from Ink and Paper, so the greys sit with the page ---- */
+  --neutral-50: color-mix(in srgb, #ffffff 55%, var(--northspec-paper));
+  --neutral-100: var(--northspec-paper);
+  --neutral-200: color-mix(in srgb, var(--northspec-ink) 8%, var(--northspec-paper));
+  --neutral-300: color-mix(in srgb, var(--northspec-ink) 16%, var(--northspec-paper));
+  --neutral-400: color-mix(in srgb, var(--northspec-ink) 32%, var(--northspec-paper));
+  --neutral-500: color-mix(in srgb, var(--northspec-ink) 52%, var(--northspec-paper));
+  --neutral-600: color-mix(in srgb, var(--northspec-ink) 68%, var(--northspec-paper));
+  --neutral-700: color-mix(in srgb, var(--northspec-ink) 82%, var(--northspec-paper));
+  --neutral-800: color-mix(in srgb, var(--northspec-ink) 92%, var(--northspec-paper));
+  --neutral-900: var(--northspec-ink);
+
+  /* ---- Surface levels (v2): 0 the page (a step darker than Paper so white cards stand
+     out behind dashboards), 1 cards, 2 raised things (sticky headers, popovers), 3 overlays ---- */
+  --surface-0: #edeae3;
+  --surface-1: #ffffff;
+  --surface-2: var(--neutral-50);
+  --surface-3: #ffffff;
+  /* A 1px hairline at low opacity, not a heavy border. */
+  --hairline: color-mix(in srgb, var(--northspec-ink) 10%, transparent);
+  --hairline-dashed: color-mix(in srgb, var(--northspec-ink) 22%, transparent);
+
+  --colour-bg: var(--surface-0); /* the page */
+  --colour-card: var(--surface-1); /* cards, tables, panels, inputs on the page */
+  --colour-surface: var(--surface-2); /* a quiet fill inside a card: table heads, hover */
   --colour-border: #e2ded4;
   /* Borders of inputs, buttons and other controls: 3:1 non-text contrast (WCAG 1.4.11)
      on card, surface and Paper (D11). */
@@ -110,17 +144,42 @@
   --content-max: 90rem; /* the widest a page's content runs on a big screen */
   --topbar-height: 3.75rem;
 
-  /* ---- Radius ---- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* ---- Radius (v2): chips 6, buttons and inputs 10, cards 14, hero panels, the sign-in
+     card and modals 20. A nested corner is the outer radius minus the padding between. ---- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
-  /* ---- Shadow ---- */
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.05);
+  /* ---- Elevation (v2): 1 a resting card (hairline plus a very soft two-layer shadow),
+     2 hover and raised, 3 popovers and modals ---- */
+  --shadow-1:
+    0 0 0 1px var(--hairline), 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.05);
+  --shadow-2:
+    0 0 0 1px var(--hairline), 0 2px 4px rgba(16, 24, 40, 0.06), 0 10px 24px rgba(16, 24, 40, 0.09);
+  --shadow-3:
+    0 0 0 1px var(--hairline), 0 8px 16px rgba(16, 24, 40, 0.1), 0 24px 48px rgba(16, 24, 40, 0.16);
+  /* The focus ring's soft halo, beside the 2px NorthSpec-blue outline. */
+  --ring: 0 0 0 5px color-mix(in srgb, var(--colour-focus) 22%, transparent);
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-card: var(--shadow-1);
   --shadow-panel: 8px 0 24px rgba(0, 0, 0, 0.25); /* the menu panel over the page */
+
+  /* ---- Motion (v2): all of it stops under prefers-reduced-motion (app.css) ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+
+  /* ---- Data-viz palette (v2): the accent plus four colours that go with it, kept apart
+     for colour-blind readers by lightness as well as hue. Charts only, never statuses. ---- */
+  --viz-1: var(--accent-700);
+  --viz-2: #1e4fd6;
+  --viz-3: #0b7a75;
+  --viz-4: #8a3ffc;
+  --viz-5: #6f7480;
 
   color-scheme: light dark;
 }
@@ -128,9 +187,32 @@
 /* Dark values: Deep Navy pages. Keep every text colour and its surface coming from these. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --colour-bg: var(--northspec-navy);
-    --colour-card: #1f2a56;
-    --colour-surface: #253163;
+    --surface-0: var(--northspec-navy);
+    --surface-1: #1f2a56;
+    --surface-2: #253163;
+    --surface-3: #2c3870;
+    --hairline: color-mix(in srgb, #ffffff 12%, transparent);
+    --hairline-dashed: color-mix(in srgb, #ffffff 24%, transparent);
+    --neutral-50: #253163;
+    --neutral-100: #2c3870;
+    --neutral-200: #36437f;
+    --neutral-300: #4a5894;
+    --neutral-400: #6c79ad;
+    --neutral-500: #8d98c2;
+    --neutral-600: #b4bcd0;
+    --neutral-700: #d3d9e5;
+    --neutral-800: #e8ebf3;
+    --neutral-900: #f2f4f7;
+    --accent-50: color-mix(in srgb, var(--accent) 16%, #18224a);
+    --accent-100: color-mix(in srgb, var(--accent) 26%, #18224a);
+    --accent-200: color-mix(in srgb, var(--accent) 42%, #18224a);
+    --accent-300: color-mix(in srgb, var(--accent) 66%, #18224a);
+    --accent-700: var(--accent-light);
+    --viz-1: var(--accent-light);
+    --viz-2: #9db7ff;
+    --viz-3: #5fd4cd;
+    --viz-4: #c9a6ff;
+    --viz-5: #a7b0c8;
     --colour-border: #36437f;
     --colour-border-strong: #8791b5;
     --colour-text: #f2f4f7;
@@ -160,6 +242,15 @@
     --status-problem-bg: #512639;
     --status-closed-text: #b4bcd0;
     --status-closed-bg: #283462;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.2);
+    /* Dark mode: lighter surfaces and a faint top highlight instead of heavy black shadows. */
+    --shadow-1:
+      0 0 0 1px var(--hairline), inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 2px 8px rgba(0, 0, 0, 0.18);
+    --shadow-2:
+      0 0 0 1px var(--hairline), inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 6px 18px rgba(0, 0, 0, 0.25);
+    --shadow-3:
+      0 0 0 1px var(--hairline), inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 16px 40px rgba(0, 0, 0, 0.4);
   }
 }

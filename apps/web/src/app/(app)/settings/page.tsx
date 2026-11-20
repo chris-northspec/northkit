@@ -1,3 +1,5 @@
+import { Building2, KeyRound, Network, SlidersHorizontal } from 'lucide-react';
+import { CardHead } from '@/components/ui/primitives';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
@@ -47,8 +49,8 @@ export default async function SettingsPage() {
       <p>
         <Link href="/settings/reporting">Reporting login for Power BI or Excel</Link>
       </p>
-      <section className="panel" aria-labelledby="org-heading">
-        <h2 id="org-heading">Organisation</h2>
+      <section className="card" aria-labelledby="org-heading">
+        <CardHead headingId="org-heading" icon={Building2} title="Organisation" />
         {edit ? (
           <ActionForm action={updateOrganisationAction} submitLabel="Save organisation">
             <Field
@@ -79,8 +81,8 @@ export default async function SettingsPage() {
         )}
       </section>
 
-      <section className="panel" id="working-rules" aria-labelledby="rules-heading">
-        <h2 id="rules-heading">Working rules</h2>
+      <section className="card" id="working-rules" aria-labelledby="rules-heading">
+        <CardHead headingId="rules-heading" icon={SlidersHorizontal} title="Working rules" />
         <p className="muted">
           How reminders and check-outs behave. Reminder days are separated by commas, longest first
           or in any order.
@@ -109,8 +111,8 @@ export default async function SettingsPage() {
         </ul>
       </section>
 
-      <section className="panel" id="licence" aria-labelledby="licence-heading">
-        <h2 id="licence-heading">Licence</h2>
+      <section className="card" id="licence" aria-labelledby="licence-heading">
+        <CardHead headingId="licence-heading" icon={KeyRound} title="Licence" />
         <p>
           <span className={`badge ${label.tone}`}>{label.text}</span>
         </p>
@@ -162,8 +164,8 @@ export default async function SettingsPage() {
         )}
       </section>
 
-      <section className="panel" id="network" aria-labelledby="network-heading">
-        <h2 id="network-heading">Reverse proxy</h2>
+      <section className="card" id="network" aria-labelledby="network-heading">
+        <CardHead headingId="network-heading" icon={Network} title="Reverse proxy" />
         <p>
           Public report limits count reports per connecting address. If NorthKit sits behind your
           own reverse proxy, every request seems to come from the proxy: name it here so the client
