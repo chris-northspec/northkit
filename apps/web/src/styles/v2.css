@@ -284,6 +284,14 @@ a.card-link:hover,
 }
 .stat .card-foot {
   margin-top: auto;
+  flex-wrap: wrap;
+}
+.stat .card-foot > span:last-child {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.card .filter-bar {
+  margin-bottom: 0;
 }
 .stat .card-foot > span:last-child {
   font-weight: var(--weight-semibold);

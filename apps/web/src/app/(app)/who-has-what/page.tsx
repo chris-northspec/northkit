@@ -14,6 +14,12 @@ import { requirePermission, siteSelection } from '@/lib/server/session';
 
 export const metadata: Metadata = { title: 'Who has what' };
 
+const GROUP_WORDS: Record<WhoView, string> = {
+  person: 'People',
+  van: 'Vans',
+  site: 'Sites',
+  store: 'Stores',
+};
 const VIEW_ICONS = { person: Users, van: Truck, site: MapPin, store: Store } as const;
 
 /**
@@ -70,7 +76,7 @@ export default async function WhoHasWhatPage({
           </span>
         </li>
         <li>
-          <span className="eyebrow">{WHO_LABELS[view].replace('By ', '')}s</span>
+          <span className="eyebrow">{GROUP_WORDS[view]}</span>
           <span className="figure">{n(groups.length)}</span>
         </li>
         <li>

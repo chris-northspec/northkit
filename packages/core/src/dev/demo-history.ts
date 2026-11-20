@@ -49,8 +49,9 @@ export async function seedDemoHistory(ctx: Ctx): Promise<DemoHistoryResult> {
   const rnd = random(20261119);
   const now = ctx.now ?? new Date();
   const midnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  // Never later than a minute ago: just after midnight, "today at 07:00" would be in the future.
   const at = (daysAgo: number, hour: number) =>
-    new Date(midnight - daysAgo * DAY + hour * 3_600_000);
+    new Date(Math.min(midnight - daysAgo * DAY + hour * 3_600_000, now.getTime() - 60_000));
 
   // People and places by code, and an actor for each person who does things.
   const users = new Map<string, { id: string; name: string }>();

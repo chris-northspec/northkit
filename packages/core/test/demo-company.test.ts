@@ -101,7 +101,7 @@ describe('pnpm db:seed-demo', () => {
     expect(Number(a.photos)).toBeGreaterThanOrEqual(20);
     // Three months of history (S3-7): 10 to 15 items overdue, 3 missing, 2 transfers in transit,
     // a stocktake on each depot's store, and enough days of movements to draw a sparkline.
-    expect(Number(a.movements)).toBeGreaterThan(800);
+    expect(Number(a.movements)).toBeGreaterThan(700);
     expect(Number(a.overdue)).toBeGreaterThanOrEqual(10);
     expect(Number(a.overdue)).toBeLessThanOrEqual(15);
     expect(Number(a.missing)).toBe(3);

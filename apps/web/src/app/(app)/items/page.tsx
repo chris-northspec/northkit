@@ -97,76 +97,78 @@ export default async function ItemsPage({
         </li>
       </ul>
 
-      <form method="get" action="/items" role="search" className="filter-bar card">
-        <div className="field">
-          <label htmlFor="q">Search</label>
-          <input
-            id="q"
-            name="q"
-            type="search"
-            className="input"
-            defaultValue={params.q ?? ''}
-            placeholder="Asset number, serial, make or model"
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="kind">Kind</label>
-          <select id="kind" name="kind" className="input" defaultValue={params.kind ?? ''}>
-            <option value="">All kinds</option>
-            {kinds.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {depots.length > 1 ? (
+      <div className="card">
+        <form method="get" action="/items" role="search" className="filter-bar">
           <div className="field">
-            <label htmlFor="depot">Depot</label>
-            <select id="depot" name="depot" className="input" defaultValue={params.depot ?? ''}>
-              <option value="">All depots</option>
-              {depots.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.code} · {d.name}
+            <label htmlFor="q">Search</label>
+            <input
+              id="q"
+              name="q"
+              type="search"
+              className="input"
+              defaultValue={params.q ?? ''}
+              placeholder="Asset number, serial, make or model"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="kind">Kind</label>
+            <select id="kind" name="kind" className="input" defaultValue={params.kind ?? ''}>
+              <option value="">All kinds</option>
+              {kinds.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.name}
                 </option>
               ))}
             </select>
           </div>
-        ) : null}
-        <div className="field">
-          <label htmlFor="status">Status</label>
-          <select id="status" name="status" className="input" defaultValue={params.status ?? ''}>
-            <option value="">Any status</option>
-            {ITEM_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="own">Ownership</label>
-          <select id="own" name="own" className="input" defaultValue={params.own ?? ''}>
-            <option value="">Owned or hired in</option>
-            <option value="owned">Owned</option>
-            <option value="hired_in">Hired in</option>
-          </select>
-        </div>
-        <div className="field">
-          <label htmlFor="kits">Kits</label>
-          <select id="kits" name="kits" className="input" defaultValue={params.kits ?? ''}>
-            <option value="">All items</option>
-            <option value="kits">Kits only</option>
-            <option value="in_kit">Items in a kit</option>
-          </select>
-        </div>
-        <div className="form-actions">
-          <button type="submit" className="button">
-            <Search size={16} className="icon" aria-hidden="true" />
-            Filter
-          </button>
-        </div>
-      </form>
+          {depots.length > 1 ? (
+            <div className="field">
+              <label htmlFor="depot">Depot</label>
+              <select id="depot" name="depot" className="input" defaultValue={params.depot ?? ''}>
+                <option value="">All depots</option>
+                {depots.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.code} · {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+          <div className="field">
+            <label htmlFor="status">Status</label>
+            <select id="status" name="status" className="input" defaultValue={params.status ?? ''}>
+              <option value="">Any status</option>
+              {ITEM_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="own">Ownership</label>
+            <select id="own" name="own" className="input" defaultValue={params.own ?? ''}>
+              <option value="">Owned or hired in</option>
+              <option value="owned">Owned</option>
+              <option value="hired_in">Hired in</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="kits">Kits</label>
+            <select id="kits" name="kits" className="input" defaultValue={params.kits ?? ''}>
+              <option value="">All items</option>
+              <option value="kits">Kits only</option>
+              <option value="in_kit">Items in a kit</option>
+            </select>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="button">
+              <Search size={16} className="icon" aria-hidden="true" />
+              Filter
+            </button>
+          </div>
+        </form>
+      </div>
 
       <FilterChips chips={chips} count={count} />
 
