@@ -69,3 +69,14 @@ export const GIF = Buffer.from(
 export const SVG = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
 );
+
+/** A real, decodable WebP (lossless) of the PNG sample's pixels, made with libwebp. */
+export async function realWebp(width = 100, height = 80): Promise<Buffer> {
+  const { PNG } = await import('pngjs');
+  const webp = (await import('webp-wasm')).default;
+  const png = PNG.sync.read(pngWithText(width, height));
+  return webp.encode(
+    { data: new Uint8ClampedArray(png.data), width: png.width, height: png.height },
+    { lossless: 1 },
+  );
+}

@@ -99,7 +99,7 @@ export default async function WhoHasWhatPage({
           <Link
             className="button"
             href={onlyOverdue ? `?view=${view}` : query({ overdue: '1' })}
-            aria-pressed={onlyOverdue}
+            aria-current={onlyOverdue ? 'true' : undefined}
           >
             {onlyOverdue ? 'Show everything' : 'Only overdue returns'}
           </Link>

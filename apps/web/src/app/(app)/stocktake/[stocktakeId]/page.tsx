@@ -210,7 +210,7 @@ function Line({
 }) {
   const name = `decision-${line.itemId}`;
   return (
-    <li className="scan-item stack" style={{ alignItems: 'stretch' }}>
+    <li className="scan-item scan-item-stack">
       <div className="row">
         <KindChip kindName={line.kindName} />
         <span className="grow">

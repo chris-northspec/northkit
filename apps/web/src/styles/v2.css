@@ -979,6 +979,17 @@ tr:focus-within .row-actions,
   background: var(--surface-1);
   box-shadow: var(--shadow-1);
 }
+/* A list item that stacks its parts (a refused change with its reason and buttons). */
+.scan-item-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+.scan-item-stack > .row {
+  align-items: center;
+  gap: var(--space-3);
+}
 .scan-item .grow {
   flex: 1 1 auto;
   min-width: 0;

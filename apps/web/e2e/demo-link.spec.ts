@@ -5,7 +5,7 @@ import { expect, test, type PlaywrightWorkerArgs } from '@playwright/test';
 import { createPool } from '@northkit/db';
 import { DEMO_HOST, DEMO_ORIGIN, E2E_DB_NAME } from '../playwright.config';
 import { E2E } from './global-setup';
-import { expectAccessible, expectNoSideways, signIn } from './helpers';
+import { expectAccessible, expectNoSideways, ready, signIn } from './helpers';
 
 // The demo link (docs/demo-link.md): the browser reaches the app by the demo name, as
 // through the Cloudflare Tunnel, which connects from this machine and adds
@@ -85,7 +85,7 @@ test('the demo strip sits above the top bar at both sizes', async ({ playwright 
     await signIn(page, E2E.operative);
     const strip = page.getByRole('note');
     await expect(strip).toHaveText('Demo, fictional data', { timeout: 90_000 });
-    await page.waitForLoadState('networkidle');
+    await ready(page);
     const box = (await strip.boundingBox())!;
     const bar = (await page.getByRole('banner').boundingBox())!;
     expect(Math.round(box.y)).toBe(0);

@@ -54,7 +54,7 @@ Per-depot scoping: each person works at all depots or only the ones listed, and 
 - **IM-1** Spreadsheet import with row-by-row checks, all or nothing (reusing ClearRate's importer); a template per kind.
 
 ### Where it is (Sprint 3)
-- **CO-1** Check out and in to a person, van, site or store in two taps; due-back dates.
+- **CO-1** Check out and in to a person, van, site or store in two taps; due-back dates (a default per kind, K33).
 - **CO-2** Transfers between depots; who-has-what lists per person, van and depot.
 - **CO-3** Overdue returns, with a reminder.
 - **CO-4** Missing and lost flow: report missing, find again, or write off (with approval).
@@ -159,3 +159,23 @@ New tests added in Sprint 2 are A21 to A27; the ones from section 8 that Sprint 
 | A26 | `pnpm db:seed-demo` stores the whole fictional company (about 600 items, 15 to 20 kit sets) and running it twice gives the same result | 2 | `packages/core/test/demo-company.test.ts` |
 | A27 | Every colour goes through the design tokens: no hard-coded hex or colour function outside `tokens.css`, and text on an accent fill uses `--colour-on-accent` | 2 | `apps/web/test/tokens.test.ts` |
 | A9 | The main screens pass axe at 1280 and 390 × 844 with no sideways scrolling (now including items, kinds, import, the item page and the scan page) | 1 onwards | `apps/web/e2e/shell.spec.ts`, `apps/web/e2e/items.spec.ts` |
+
+## 10. Sprint 3 acceptance tests and where each is tested
+
+New tests added in Sprint 3 are A28 to A33; the ones from section 8 that Sprint 3 delivers (A10, A16, A17, A18, A20) are mapped too. "db" is Vitest as the app's own database role against the real triggers; "service" is Vitest through the services as a person would use them; "browser" is Playwright at 1280 and 390 × 844 with axe in light and dark.
+
+| # | Test | Sprint | Where |
+| --- | --- | --- | --- |
+| A10 | An item is checked out to a person in two taps and checked back in; the history shows who, when and from where | 3 | `packages/db/test/movements.test.ts` (check-out, check-in, "from" filled in by the trigger), `packages/core/test/movements.test.ts` (two taps, the history), `apps/web/e2e/movements.spec.ts` (the phone flow, both sizes) |
+| A16 | A check-out made offline syncs later; a clash is kept and shown | 3 | `packages/core/test/movements.test.ts` (a replay applies once; a change that no longer fits is refused with the reason), `apps/web/e2e/offline.spec.ts` (five movements and a stocktake offline, the phone closed and reopened, synced in order; the clash kept and shown; 20 of 20 runs) |
+| A17 | A stocktake of a location reports found, not found and found elsewhere | 3 | `packages/db/test/movements.test.ts` (one count per location, a closed count never changes, a decision fits its outcome), `packages/core/test/movements.test.ts` (the three lists and only the choices made applied), `apps/web/e2e/movements.spec.ts` |
+| A18 | A transfer between depots moves the item and is visible only to people at the depots involved | 3 | `packages/db/test/movements.test.ts` and `packages/db/test/site-isolation.test.ts` (both depots see the transfer, a third sees nothing, neither sees the other's items), `packages/core/test/movements.test.ts`, `apps/web/e2e/movements.spec.ts` |
+| A20 | Overdue returns appear on the dashboard (the reminder follows in Sprint 4) | 3 | `packages/core/test/movements.test.ts` (overdue lists, My kit, who has what), `apps/web/e2e/movements.spec.ts` (the Overview card and the who-has-what filter) |
+| A28 | The movement record is evidence: never updated or deleted, by the app or the owner; the item's position, holder and status change only by inserting a movement, so the two can't drift; a kit moves with its parts and a part out on its own blocks the kit by name | 3 | `packages/db/test/movements.test.ts` |
+| A29 | Only an available item can be checked out, and the refusal says why (out, quarantined, missing, in transit, retired); two phones at the same moment check an item out once | 3 | `packages/db/test/movements.test.ts`, `packages/core/test/movements.test.ts` (the reason reaches the screen) |
+| A30 | Operatives check out and in to themselves and their own van only; Supervisors for anyone at their depot; Kit Managers anything (K37); another depot's kit and places are not found | 3 | `packages/core/test/movements.test.ts`, `apps/web/e2e/movements.spec.ts` |
+| A31 | Every site-owned table added in Sprint 3 (movements and their partitions, transfers, stocktakes, stocktake lines) has forced RLS, the three policies and an isolation test | 3 | `packages/db/test/site-isolation.test.ts` |
+| A32 | `pnpm db:seed-demo` stores three months of movement history (10 to 15 overdue, 3 missing, 2 in transit, a stocktake per depot) and running it twice gives the same result | 3 | `packages/core/test/demo-company.test.ts` |
+| A33 | Every colour, radius and shadow goes through the tokens; every v2 token pair (surfaces, neutrals, the accent ramp, charts, the focus ring) meets WCAG AA in light and dark; the primary button is Ink on Hi-Vis Yellow | 2 onwards | `apps/web/test/tokens.test.ts`, `apps/web/test/contrast.test.ts`, `apps/web/e2e/themes.spec.ts` |
+| A9 | The main screens pass axe at 1280 and 390 × 844 (now including who has what, My kit, transfers, stocktake, the check-out, check-in and missing flows, and the result screen) | 1 onwards | `apps/web/e2e/shell.spec.ts`, `apps/web/e2e/themes.spec.ts`, `apps/web/e2e/movements.spec.ts` |
+| A21 | Photos: a WebP upload now gets a thumbnail from the worker (K22); one the worker cannot decode is marked as having none | 2, 3 | `packages/core/test/media.test.ts`, `packages/core/test/photos.test.ts` |

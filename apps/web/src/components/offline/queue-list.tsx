@@ -50,7 +50,7 @@ export function OfflineQueueList() {
   return (
     <ul className="scan-list" aria-label="On this phone">
       {ops.map((op) => (
-        <li key={op.seq} className="scan-item stack" style={{ alignItems: 'stretch' }}>
+        <li key={op.seq} className="scan-item scan-item-stack">
           <div className="row">
             <span className="grow">
               <Link href={op.href}>

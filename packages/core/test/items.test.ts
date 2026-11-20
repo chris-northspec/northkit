@@ -159,6 +159,22 @@ describe('kinds (S2-1)', () => {
     await deleteKind(f.db, manager, spare.id);
     await expect(getKind(f.db, manager, spare.id)).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  it('carries how long its kit is usually out for, offered as the due-back date (K33)', async () => {
+    const kind = await createKind(f.db, manager, { name: `Days ${f.tag}` });
+    expect(kind.default_days_out).toBeNull();
+    const updated = await updateKind(f.db, manager, kind.id, kind.row_version, {
+      name: kind.name,
+      defaultDaysOut: '14',
+    });
+    expect(updated.default_days_out).toBe(14);
+    await expect(
+      updateKind(f.db, manager, kind.id, updated.row_version, {
+        name: kind.name,
+        defaultDaysOut: 'a fortnight',
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
 });
 
 describe('item register (S2-2)', () => {

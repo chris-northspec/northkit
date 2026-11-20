@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { OfflineQueueList } from '@/components/offline/queue-list';
+import { OfflineReadyNote } from '@/components/offline/offline-ready-note';
 import { requireSession } from '@/lib/server/session';
 
 export const metadata: Metadata = { title: 'Changes not sent yet' };
@@ -28,6 +29,7 @@ export default async function SyncPage() {
       <section className="card" aria-label="On this phone">
         <OfflineQueueList />
       </section>
+      <OfflineReadyNote path="/sync" />
     </>
   );
 }

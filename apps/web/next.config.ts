@@ -29,7 +29,7 @@ const nextConfig = (phase: string): NextConfig => {
     output: 'standalone',
     outputFileTracingRoot: path.join(import.meta.dirname, '../../'),
     transpilePackages: ['@northkit/core', '@northkit/db', '@northkit/licence'],
-    serverExternalPackages: ['pg', '@node-rs/argon2', 'pdfkit'],
+    serverExternalPackages: ['pg', '@node-rs/argon2', 'pdfkit', 'webp-wasm'],
     poweredByHeader: false,
     // sharp (LGPL libvips) is excluded from the install, so the optimiser can't run.
     images: { unoptimized: true },

@@ -53,7 +53,7 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
         </Link>
       </div>
 
-      <section className="panel" aria-labelledby="rules-heading">
+      <section className="card" aria-labelledby="rules-heading">
         <h2 id="rules-heading">Inspection rules</h2>
         <p className="notice notice-info">{KIND_RULES_NOTICE}</p>
         {kind.rules.length === 0 ? (
@@ -129,7 +129,7 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
       </section>
 
       {edit ? (
-        <section className="panel" aria-labelledby="add-rule-heading">
+        <section className="card" aria-labelledby="add-rule-heading">
           <h2 id="add-rule-heading">Add a rule</h2>
           <ActionForm
             action={addRuleAction.bind(null, kind.id)}
@@ -170,7 +170,7 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
         </section>
       ) : null}
 
-      <section className="panel" aria-labelledby="details-heading">
+      <section className="card" aria-labelledby="details-heading">
         <h2 id="details-heading">Details</h2>
         {edit ? (
           <ActionForm
@@ -186,6 +186,14 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
                 autoCapitalize="characters"
                 maxLength={8}
               />
+              <Field
+                name="defaultDaysOut"
+                label="Usually out for (days)"
+                hint="The due-back date offered at check-out. Blank uses the organisation setting."
+                defaultValue={kind.default_days_out === null ? '' : String(kind.default_days_out)}
+                inputMode="numeric"
+                maxLength={3}
+              />
             </div>
             <Field
               name="description"
@@ -198,6 +206,12 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
           <dl className="details">
             <dt>What it covers</dt>
             <dd>{orDash(kind.description)}</dd>
+            <dt>Usually out for</dt>
+            <dd>
+              {kind.default_days_out === null
+                ? 'The organisation setting'
+                : `${kind.default_days_out} days`}
+            </dd>
             <dt>Asset number prefix</dt>
             <dd>{orDash(kind.asset_prefix)}</dd>
           </dl>
@@ -205,7 +219,7 @@ export default async function KindPage({ params }: { params: Promise<{ kindId: s
       </section>
 
       {edit ? (
-        <section className="panel" aria-labelledby="state-heading">
+        <section className="card" aria-labelledby="state-heading">
           <h2 id="state-heading">
             {kind.active ? 'Deactivate this kind' : 'Reactivate this kind'}
           </h2>

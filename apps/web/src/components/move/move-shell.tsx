@@ -64,9 +64,7 @@ export function Done({
           </svg>
         </span>
       )}
-      <h1 role="status">
-        {allRefused ? 'Not done' : result.waiting ? 'Saved on this phone' : title}
-      </h1>
+      <h1>{allRefused ? 'Not done' : result.waiting ? 'Saved on this phone' : title}</h1>
       {result.waiting ? (
         <p className="notice notice-warning">
           <CloudOff size={18} className="icon" aria-hidden="true" /> No signal, so{' '}

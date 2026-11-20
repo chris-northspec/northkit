@@ -24,11 +24,14 @@ Fonts, icons and images: the mark, app icons (rounded and maskable), favicon and
 | pngjs | 7.0.0 | MIT | core | Decodes PNGs for thumbnails and writes the demo's placeholder photos. Also used by ClearRate |
 | read-excel-file | 9.3.17 | MIT | core | Reads .xlsx imports (S2-5): each cell's stored value, never calculating a formula, never running a macro; numbers read as exact text. Brings fflate, saxen, worker-f, unzipper-esm (all MIT) and graceful-fs (pinned, below). As ClearRate |
 | write-excel-file | 4.1.1 | MIT | core | Writes the Excel import template. As ClearRate |
+| lucide-react | 1.69.0 | ISC | web | The icon set (House style v2, standard 13, K32): one stroke width, sizes 16, 20 and 24, always beside text where meaning matters. Tree-shaken, so only the icons used ship |
+| jsqr | 1.4.0 | Apache-2.0 | web | Reads a QR label from the phone camera in the browser where it has no BarcodeDetector (S3-2). The frame never leaves the phone. Also used in the label tests |
+| webp-wasm | 1.0.6 | MIT (its WebAssembly is libwebp from Squoosh, Apache-2.0) | core (worker) | Decodes WebP item photos for thumbnails in the worker (K22, Chris 19 Nov 2026). No native binary; loaded on first use |
 | tsx | 4.23 | MIT | worker, migrate | Runs the worker and the migration and CLI tools from TypeScript source in the `tools` Docker image |
 
 The licence module (`packages/licence`) uses only Node's built-in `crypto` (Ed25519): no licensing library.
 
-Added in Sprint 2: pdfkit, jpeg-js, pngjs, read-excel-file and write-excel-file (above). Not carried over from NorthKeep yet, and added back with the sprint that needs it: nodemailer (MIT-0, email reminders, Sprint 4) and the spreadsheet report writers (Sprint 5).
+Added in Sprint 3: lucide-react, jsqr (now in the app too) and webp-wasm (above). Added in Sprint 2: pdfkit, jpeg-js, pngjs, read-excel-file and write-excel-file (above). Not carried over from NorthKeep yet, and added back with the sprint that needs it: nodemailer (MIT-0, email reminders, Sprint 4) and the spreadsheet report writers (Sprint 5).
 
 ## Development and CI only (not shipped)
 
@@ -45,7 +48,7 @@ Added in Sprint 2: pdfkit, jpeg-js, pngjs, read-excel-file and write-excel-file 
 | vitest | 5.1 | MIT | Unit and integration tests on real PostgreSQL |
 | @playwright/test | 1.65 | Apache-2.0 | Browser tests at 1280 wide and 390 × 844 |
 | @axe-core/playwright, axe-core | 4.11 | MPL-2.0 (build and test tools only, unmodified) | WCAG 2.2 AA checks in the browser tests. Allowed by the MPL-2.0 condition: never shipped, never modified |
-| jsqr | 1.4 | Apache-2.0 | Independent QR decoder, used only in tests to prove the QR codes we draw read back correctly, including from the printed label PDFs |
+| jsqr (also shipped, above) | 1.4 | Apache-2.0 | Independent QR decoder in the tests to prove the QR codes we draw read back correctly, including from the printed label PDFs |
 | pdfjs-dist | 6.5 | Apache-2.0 | Independent PDF reader in the label tests: reads back each page's text, so what a PDF viewer shows is checked, not what our code meant to write |
 | @types/pdfkit, @types/pngjs | | MIT | Type definitions |
 

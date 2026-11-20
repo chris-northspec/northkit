@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { KindChip } from '@/components/ui/kind-icon';
 import { getScans, putScans } from '@/lib/offline/store';
 import { newId, submit } from '@/lib/offline/submit';
+import { flush } from '@/lib/offline/sync';
 import type { OfflineSnapshot, SnapshotItem } from '@/lib/offline/snapshot';
 import { ItemPicker } from './item-picker';
 import { MoveShell, ScanError, StepHead } from './move-shell';
@@ -31,6 +31,8 @@ function Count({ snapshot, userId }: { snapshot: OfflineSnapshot; userId: string
   const [scanned, setScanned] = useState<{ id: string; assetNumber: string }[] | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [last, setLast] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let stopped = false;
@@ -114,9 +116,27 @@ function Count({ snapshot, userId }: { snapshot: OfflineSnapshot; userId: string
         </ul>
       ) : null}
       <div className="sticky-bottom scan-actions">
-        <Link className="scan-btn scan-btn-primary" href={`/stocktake/${id}`}>
-          Finish scanning: see the result
-        </Link>
+        <button
+          type="button"
+          className="scan-btn scan-btn-primary"
+          disabled={finishing}
+          onClick={() => {
+            // The result is worked out on the server from what it holds, so every scan must
+            // have been sent first. With no signal there is nothing to show yet.
+            if (!navigator.onLine) {
+              setMessage(
+                'There is no connection, so the result can’t be worked out yet. Your scans are saved on this phone and will be counted when they are sent. Come back to this count when you are online.',
+              );
+              return;
+            }
+            setFinishing(true);
+            void flush(userId)
+              .catch(() => undefined)
+              .then(() => router.push(`/stocktake/${id}`));
+          }}
+        >
+          {finishing ? 'Sending your scans…' : 'Finish scanning: see the result'}
+        </button>
         <p className="muted small">
           The result needs a connection, and is worked out from what the register holds once your
           scans have been sent.

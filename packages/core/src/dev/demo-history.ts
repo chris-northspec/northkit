@@ -2,7 +2,7 @@ import { createDb, type Db } from '@northkit/db';
 import type pg from 'pg';
 import { loadActor } from '../auth/sessions';
 import type { ActorContext } from '../context';
-import { checkIn, checkOut, reportMissing, type CheckOutInput } from '../services/movements';
+import { checkIn, checkOut, reportMissing } from '../services/movements';
 import {
   closeStocktake,
   scanStocktake,
@@ -115,7 +115,7 @@ export async function seedDemoHistory(ctx: Ctx): Promise<DemoHistoryResult> {
         destination: { kind: 'site', locationId: places.get(vanCode)!.id },
         occurredAt: when.toISOString(),
         note: 'Loaded into the van',
-      } as CheckOutInput),
+      }),
     );
     movements += 1;
   }
@@ -148,7 +148,7 @@ export async function seedDemoHistory(ctx: Ctx): Promise<DemoHistoryResult> {
           : { kind: 'person', userId: users.get(who)!.id },
         dueBackOn: due,
         occurredAt: out.toISOString(),
-      } as CheckOutInput),
+      }),
     );
     movements += 1;
     if (backAfterDays === null) {

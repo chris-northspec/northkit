@@ -11,7 +11,7 @@ import {
   sniffImage,
   stripMetadata,
 } from '../media/images';
-import { makeThumbnail } from '../media/thumbnail';
+import { makeAnyThumbnail } from '../media/thumbnail';
 
 // Item photos (S2-3, IT-2). Up to 10 per item, JPEG, PNG or WebP decided from the bytes,
 // 10 MB each, metadata (EXIF and GPS) stripped before anything is stored. Photos are
@@ -152,7 +152,7 @@ export async function makePendingThumbnails(db: Db, limit = 25): Promise<number>
   let made = 0;
   for (const photo of rows) {
     try {
-      const thumb = makeThumbnail(await readStored(photo.storage_key));
+      const thumb = await makeAnyThumbnail(await readStored(photo.storage_key));
       const key = photo.storage_key.replace(/\.(jpg|png|webp)$/, '.thumb.jpg');
       await writeStored(key, thumb);
       await sql`SELECT register.record_photo_thumbnail(${photo.id}::uuid, ${key})`.execute(db);

@@ -11,8 +11,12 @@ export const E2E = {
   admin: (project: string) => `e2e.admin.${project.replace(/[^a-z0-9]/g, '')}@northkit.test`,
   /** Kit Manager at depot E2E-A only, and the depot's manager. */
   manager: 'e2e.manager@northkit.test',
-  /** Operative at depot E2E-A: checks kit out and in, nothing else. */
+  /** Operative at depot E2E-A: checks kit out and in, nothing else. Has Van 1 as their own. */
   operative: 'e2e.operative@northkit.test',
+  /** Another operative at depot E2E-A, with no van of their own. */
+  operativeTwo: 'e2e.operative2@northkit.test',
+  /** Supervisor at depot E2E-A: issues to anyone, sends and receives transfers, closes counts. */
+  supervisor: 'e2e.supervisor@northkit.test',
   /** Administrator without two-factor yet: forced to set it up. */
   newAdmin: (project: string) => `e2e.newadmin.${project.replace(/[^a-z0-9]/g, '')}@northkit.test`,
   /** Supervisor at E2E-A who must change their password at next sign-in. */
@@ -123,6 +127,29 @@ export default async function globalSetup(): Promise<void> {
       operative,
       siteA,
     ]);
+    // Van 1 at depot A is the operative's own van: "To my van" at check-out means this one.
+    await pool.query(`UPDATE core.locations SET assigned_user_id = $1 WHERE code = 'A-VAN1'`, [
+      operative,
+    ]);
+    for (const [email, name, role] of [
+      [E2E.operativeTwo, 'Operative A2', 'operative'],
+      [E2E.supervisor, 'Supervisor A', 'supervisor'],
+    ] as const) {
+      const id = await user(email, name, role);
+      await pool.query(`INSERT INTO core.user_sites (user_id, site_id) VALUES ($1, $2)`, [
+        id,
+        siteA,
+      ]);
+    }
+    // A job site at depot A, and a store at depot B to receive transfers into.
+    await pool.query(
+      `INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'site', 'A-JOB1', 'Smith job')`,
+      [siteA],
+    );
+    await pool.query(
+      `INSERT INTO core.locations (site_id, kind, code, name) VALUES ($1, 'store', 'B-STORE', 'Birchmoor store')`,
+      [siteB],
+    );
   } finally {
     await pool.end();
   }

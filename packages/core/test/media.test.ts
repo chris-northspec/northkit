@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { imageInfo, sniffImage, stripMetadata } from '../src/media/images';
-import { makeThumbnail, NoThumbnailError } from '../src/media/thumbnail';
-import { GIF, jpegWithExif, pngWithText, SVG, webpWithExif } from './samples';
+import { makeAnyThumbnail, makeThumbnail, NoThumbnailError } from '../src/media/thumbnail';
+import { GIF, jpegWithExif, pngWithText, realWebp, SVG, webpWithExif } from './samples';
 
 // S2-3: the type is decided by content, metadata is stripped, thumbnails are made without
 // a native library. Acceptance A21 (photos): wrong type refused, EXIF removed.
@@ -71,8 +71,18 @@ describe('thumbnails', () => {
     expect(info.height).toBeLessThan(info.width);
   });
 
-  it('makes one from a PNG, and none for a WebP', () => {
+  it('makes one from a PNG; the synchronous path takes no WebP', () => {
     expect(imageInfo(makeThumbnail(pngWithText(100, 100)))?.type).toBe('image/jpeg');
     expect(() => makeThumbnail(webpWithExif())).toThrow(NoThumbnailError);
+  });
+
+  it('makes one from a real WebP in the worker (K22), and none from a WebP it cannot decode', async () => {
+    const thumb = Buffer.from(await makeAnyThumbnail(await realWebp(900, 300)));
+    const info = imageInfo(thumb)!;
+    expect(info.type).toBe('image/jpeg');
+    expect(info.width).toBe(320);
+    expect(info.height).toBeLessThanOrEqual(107);
+    // The synthetic WebP (a header and a bogus payload) is refused, not crashed on.
+    await expect(makeAnyThumbnail(webpWithExif())).rejects.toBeInstanceOf(NoThumbnailError);
   });
 });

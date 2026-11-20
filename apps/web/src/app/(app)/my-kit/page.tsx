@@ -4,6 +4,7 @@ import { Hand, LogIn } from 'lucide-react';
 import { can, myKit } from '@northkit/core';
 import { ItemStatusPill } from '@/components/badges';
 import { EmptyState } from '@/components/states';
+import { OfflineReadyNote } from '@/components/offline/offline-ready-note';
 import { CardHead } from '@/components/ui/primitives';
 import { KindChip } from '@/components/ui/kind-icon';
 import { n, plural, ukDay } from '@/lib/format';
@@ -98,6 +99,7 @@ export default async function MyKitPage() {
           </ul>
         </section>
       )}
+      <OfflineReadyNote path="/my-kit" />
     </>
   );
 }

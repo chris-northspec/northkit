@@ -8,6 +8,14 @@ NorthKit is built on open-source software. Most of it is under permissive licenc
 | --- | --- | --- | --- |
 | `caniuse-lite` | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Browser-support data used by Next.js (via browserslist). Data only, not modified. | Data from the Can I Use project, © Alexis Deveria, https://caniuse.com, licensed under CC BY 4.0. |
 
+## Shipped with the product: icons and a codec (ISC, Apache-2.0)
+
+| Package | Licence | What it is | Credit |
+| --- | --- | --- | --- |
+| `lucide-react` | [ISC](https://github.com/lucide-icons/lucide/blob/main/LICENSE) | The Lucide icon set, drawn as React components. Only the icons used are built in. | Lucide Contributors, https://lucide.dev |
+| `webp-wasm` | [MIT](https://github.com/jhuckaby/webp-wasm/blob/main/LICENSE.md); its WebAssembly codec is libwebp as built by [Squoosh](https://github.com/GoogleChromeLabs/squoosh), [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | Decodes WebP photos for thumbnails, in the worker. | Joseph Huckaby; Google Chrome Labs (Squoosh); the WebM Project (libwebp, BSD-3-Clause) |
+| `jsqr` | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | Reads QR codes from camera frames in the browser. | Cosmo Wolfe |
+
 ## Shipped with the product: font files only (SIL Open Font Licence 1.1)
 
 Font files and the stylesheets that declare them; no code. Not modified. Served from the customer's own server: nothing is fetched from a font service.
